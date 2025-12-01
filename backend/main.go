@@ -443,7 +443,6 @@ func main() {
 	initBlockchain()
 
 	router := mux.NewRouter()
-	router.Use(enableCORS)
 
 	// Activity endpoints
 	router.HandleFunc("/api/activities", createActivity).Methods("POST")
@@ -464,5 +463,7 @@ func main() {
 
 	port := ":8080"
 	log.Printf("Server starting on %s", port)
-	log.Fatal(http.ListenAndServe(port, router))
+
+	// 关键：在这里把整个 router 用 enableCORS 包起来
+	log.Fatal(http.ListenAndServe(port, enableCORS(router)))
 }
