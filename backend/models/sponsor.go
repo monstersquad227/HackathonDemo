@@ -32,7 +32,7 @@ type Sponsor struct {
 	Description string         `json:"description" gorm:"type:text"`
 	LogoURL     string         `json:"logo_url"`
 	WebsiteURL  string         `json:"website_url"`
-	Address     string         `json:"address" gorm:"not null;uniqueIndex"` // Wallet address
+	Address     string         `json:"address" gorm:"type:varchar(255);not null;uniqueIndex"` // Wallet address
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `json:"deleted_at" gorm:"index"`
@@ -44,7 +44,7 @@ type Sponsorship struct {
 	EventID         uint              `json:"event_id" gorm:"not null;index"`
 	SponsorID       uint              `json:"sponsor_id" gorm:"not null;index"`
 	AssetType       AssetType         `json:"asset_type" gorm:"type:varchar(20);not null"`
-	TokenAddress    string            `json:"token_address"`          // ERC20 token address, or NFT contract address
+	TokenAddress    string            `json:"token_address" gorm:"type:varchar(255)"`          // ERC20 token address, or NFT contract address
 	TokenID         string            `json:"token_id"`               // NFT token ID (if NFT)
 	Amount          string            `json:"amount" gorm:"not null"` // Amount in wei/smallest unit
 	AmountDisplay   string            `json:"amount_display"`         // Human-readable amount
@@ -53,7 +53,7 @@ type Sponsorship struct {
 	VotingWeight    string            `json:"voting_weight"`   // Voting weight (e.g., "1 USDC = 1 vote")
 	VotingPower     float64           `json:"voting_power" gorm:"type:numeric(24,6);default:0"`
 	Benefits        string            `json:"benefits" gorm:"type:text"` // Sponsorship benefits description
-	ContractAddress string            `json:"contract_address"`          // Prize pool contract address
+	ContractAddress string            `json:"contract_address" gorm:"type:varchar(255)"`          // Prize pool contract address
 	CreatedAt       time.Time         `json:"created_at"`
 	UpdatedAt       time.Time         `json:"updated_at"`
 	DeletedAt       gorm.DeletedAt    `json:"deleted_at" gorm:"index"`
@@ -67,7 +67,7 @@ type Sponsorship struct {
 type FundingPool struct {
 	ID              uint           `json:"id" gorm:"primaryKey"`
 	EventID         uint           `json:"event_id" gorm:"not null;uniqueIndex"`
-	ContractAddress string         `json:"contract_address" gorm:"not null"` // On-chain contract address
+	ContractAddress string         `json:"contract_address" gorm:"type:varchar(255);not null"` // On-chain contract address
 	TotalAmount     string         `json:"total_amount"`                     // Total amount in pool (in wei)
 	LockedUntil     *time.Time     `json:"locked_until"`                     // Locked until event ends
 	Distributed     bool           `json:"distributed" gorm:"default:false"` // Whether prizes have been distributed

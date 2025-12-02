@@ -21,7 +21,7 @@ type Team struct {
 	Name        string     `json:"name" gorm:"not null"`
 	Description string     `json:"description" gorm:"type:text"`
 	LeaderID    uint       `json:"leader_id" gorm:"not null"` // User ID of team leader
-	LeaderAddress string   `json:"leader_address" gorm:"not null"` // Wallet address of team leader
+	LeaderAddress string   `json:"leader_address" gorm:"type:varchar(255);not null"` // Wallet address of team leader
 	MaxMembers  int        `json:"max_members" gorm:"default:5"` // Maximum team size
 	Status      TeamStatus `json:"status" gorm:"type:varchar(20);default:'pending'"`
 	Skills      string     `json:"skills" gorm:"type:text"` // Comma-separated skills
@@ -39,7 +39,7 @@ type TeamMember struct {
 	ID        uint      `json:"id" gorm:"primaryKey"`
 	TeamID    uint      `json:"team_id" gorm:"not null;index"`
 	UserID    uint      `json:"user_id"` // Optional: if you have user system
-	Address   string    `json:"address" gorm:"not null"` // Wallet address
+	Address   string    `json:"address" gorm:"type:varchar(255);not null"` // Wallet address
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	Skills    string    `json:"skills" gorm:"type:text"` // Comma-separated skills
