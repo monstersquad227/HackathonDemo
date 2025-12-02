@@ -35,6 +35,8 @@ func Initialize(databaseURL string) *gorm.DB {
 		&models.CheckIn{},
 		&models.Submission{},
 		&models.SubmissionFile{},
+		&models.Vote{},
+		&models.EventJudge{},
 	)
 
 	if err != nil {
@@ -52,4 +54,3 @@ func Close(db *gorm.DB) {
 	}
 	sqlDB.Close()
 }
-

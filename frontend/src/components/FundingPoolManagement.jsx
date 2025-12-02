@@ -14,6 +14,10 @@ const FundingPoolManagement = () => {
   const [formData, setFormData] = useState({
     contract_address: '',
   })
+  const [lockForm, setLockForm] = useState({
+    locked_until: '',
+  })
+  const [updatingPool, setUpdatingPool] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -47,6 +51,40 @@ const FundingPoolManagement = () => {
       loadData()
     } catch (err) {
       alert('创建奖金池失败: ' + (err.response?.data?.error || err.message))
+    }
+  }
+
+  const handleSetLockedUntil = async (e) => {
+    e.preventDefault()
+    if (!lockForm.locked_until) {
+      alert('请先选择锁定时间')
+      return
+    }
+
+    try {
+      setUpdatingPool(true)
+      const iso = new Date(lockForm.locked_until).toISOString()
+      await fundingPoolApi.setLockedUntil(eventId, iso)
+      await loadData()
+    } catch (err) {
+      alert('设置锁定时间失败: ' + (err.response?.data?.error || err.message))
+    } finally {
+      setUpdatingPool(false)
+    }
+  }
+
+  const handleMarkDistributed = async () => {
+    if (!window.confirm('确定标记为“已发放”吗？请确保已在链上完成奖金发放。')) {
+      return
+    }
+    try {
+      setUpdatingPool(true)
+      await fundingPoolApi.markAsDistributed(eventId)
+      await loadData()
+    } catch (err) {
+      alert('标记发放状态失败: ' + (err.response?.data?.error || err.message))
+    } finally {
+      setUpdatingPool(false)
     }
   }
 
@@ -148,6 +186,35 @@ const FundingPoolManagement = () => {
             <p>
               <strong>已发放:</strong> {pool.distributed ? '是' : '否'}
             </p>
+          </div>
+          <div className="pool-actions">
+            <form onSubmit={handleSetLockedUntil} className="lock-form">
+              <label>
+                锁定至时间
+                <input
+                  type="datetime-local"
+                  value={lockForm.locked_until}
+                  onChange={(e) =>
+                    setLockForm({ locked_until: e.target.value })
+                  }
+                />
+              </label>
+              <button
+                type="submit"
+                className="btn btn-secondary"
+                disabled={updatingPool}
+              >
+                {updatingPool ? '处理中...' : '设置锁定时间'}
+              </button>
+            </form>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleMarkDistributed}
+              disabled={updatingPool || pool.distributed}
+            >
+              {pool.distributed ? '已标记为已发放' : '标记为已发放'}
+            </button>
           </div>
         </div>
       )}

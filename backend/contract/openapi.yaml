@@ -1,0 +1,2272 @@
+openapi: 3.0.3
+info:
+  title: Hackathon Demo API
+  description: >
+    OpenAPI 3.0 规范，覆盖 Hackathon Demo 后端的全部 REST 接口，方便前后端联调与测试。
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: 本地开发环境
+tags:
+  - name: Events
+  - name: Sponsors
+  - name: Sponsorships
+  - name: FundingPools
+  - name: Teams
+  - name: Registrations
+  - name: CheckIns
+  - name: Submissions
+  - name: Votes
+  - name: Judges
+paths:
+  /api/v1/events:
+    post:
+      tags: [Events]
+      summary: 创建活动
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: 请求校验失败
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务端错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags: [Events]
+      summary: 获取活动列表
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        '500':
+          description: 服务端错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/events/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    get:
+      tags: [Events]
+      summary: 获取单个活动
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags: [Events]
+      summary: 更新活动
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Events]
+      summary: 删除活动
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/events/{id}/stage:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    patch:
+      tags: [Events]
+      summary: 更新活动阶段
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStageRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/sponsors:
+    post:
+      tags: [Sponsors]
+      summary: 创建赞助商
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSponsorRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsor'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags: [Sponsors]
+      summary: 获取赞助商列表
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sponsor'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/sponsors/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    get:
+      tags: [Sponsors]
+      summary: 获取赞助商
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsor'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags: [Sponsors]
+      summary: 更新赞助商
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSponsorRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsor'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Sponsors]
+      summary: 删除赞助商
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/sponsors/address/{address}:
+    parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Sponsors]
+      summary: 按地址查询赞助商
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsor'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/sponsorships:
+    post:
+      tags: [Sponsorships]
+      summary: 创建赞助
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSponsorshipRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsorship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/sponsorships/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    get:
+      tags: [Sponsorships]
+      summary: 获取赞助详情
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsorship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/sponsorships/event/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+    get:
+      tags: [Sponsorships]
+      summary: 获取活动赞助列表
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sponsorship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/sponsorships/{id}/approve:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    patch:
+      tags: [Sponsorships]
+      summary: 审批赞助
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizerActionRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsorship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/sponsorships/{id}/reject:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    patch:
+      tags: [Sponsorships]
+      summary: 拒绝赞助
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizerActionRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsorship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/sponsorships/{id}/deposit:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    patch:
+      tags: [Sponsorships]
+      summary: 更新存款状态
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositStatusRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsorship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/funding-pools:
+    post:
+      tags: [FundingPools]
+      summary: 创建奖池
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFundingPoolRequest'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundingPool'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags: [FundingPools]
+      summary: 奖池列表
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FundingPool'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/funding-pools/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    get:
+      tags: [FundingPools]
+      summary: 获取奖池
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundingPool'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags: [FundingPools]
+      summary: 更新奖池金额
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFundingPoolRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundingPool'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/funding-pools/event/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+    get:
+      tags: [FundingPools]
+      summary: 按活动查询奖池
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundingPool'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/funding-pools/event/{eventId}/lock:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+    patch:
+      tags: [FundingPools]
+      summary: 设置锁定时间
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetLockedUntilRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundingPool'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/funding-pools/event/{eventId}/distribute:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+    patch:
+      tags: [FundingPools]
+      summary: 标记奖池已分发
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundingPool'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/teams:
+    post:
+      tags: [Teams]
+      summary: 创建团队
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTeamRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags: [Teams]
+      summary: 团队列表
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/teams/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    get:
+      tags: [Teams]
+      summary: 获取团队
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags: [Teams]
+      summary: 更新团队
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTeamRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Teams]
+      summary: 删除团队
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/teams/leader/{address}:
+    parameters:
+      - $ref: '#/components/parameters/AddressPathParam'
+    get:
+      tags: [Teams]
+      summary: 按队长地址查询团队
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/teams/member/{address}:
+    parameters:
+      - $ref: '#/components/parameters/AddressPathParam'
+    get:
+      tags: [Teams]
+      summary: 按成员地址查询团队
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/teams/{id}/members:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    post:
+      tags: [Teams]
+      summary: 添加成员
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMemberRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/teams/{id}/members/{memberId}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+      - name: memberId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    delete:
+      tags: [Teams]
+      summary: 移除成员
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/teams/{id}/approve:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    patch:
+      tags: [Teams]
+      summary: 审批团队
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizerActionRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/teams/{id}/reject:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    patch:
+      tags: [Teams]
+      summary: 拒绝团队
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizerActionRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/registrations:
+    post:
+      tags: [Registrations]
+      summary: 提交团队报名
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRegistrationRequest'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/registrations/event/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+    get:
+      tags: [Registrations]
+      summary: 获取活动报名列表
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Registration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/registrations/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    get:
+      tags: [Registrations]
+      summary: 获取报名
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Registrations]
+      summary: 删除报名
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/registrations/{id}/approve:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    patch:
+      tags: [Registrations]
+      summary: 审批报名
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizerActionRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/registrations/{id}/reject:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    patch:
+      tags: [Registrations]
+      summary: 拒绝报名
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizerActionRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/registrations/{id}/sbt:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    patch:
+      tags: [Registrations]
+      summary: 更新 SBT 铸造状态
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSBTStatusRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/check-ins:
+    post:
+      tags: [CheckIns]
+      summary: 签到校验
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckInRequest'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckIn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [CheckIns]
+      summary: （保留）支持未来扩展
+      responses:
+        '200':
+          description: OK
+  /api/v1/check-ins/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    get:
+      tags: [CheckIns]
+      summary: 获取签到记录
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckIn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [CheckIns]
+      summary: 删除签到
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/check-ins/{id}/tx:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    patch:
+      tags: [CheckIns]
+      summary: 更新签到交易哈希
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTxHashRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckIn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/check-ins/event/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+    get:
+      tags: [CheckIns]
+      summary: 活动签到列表
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CheckIn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/check-ins/event/{eventId}/qrcode:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+    get:
+      tags: [CheckIns]
+      summary: 生成签到二维码
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckInQRCodeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/check-ins/event/{eventId}/count:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+    get:
+      tags: [CheckIns]
+      summary: 获取签到人数
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/check-ins/event/{eventId}/user/{address}:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+      - $ref: '#/components/parameters/AddressPathParam'
+    get:
+      tags: [CheckIns]
+      summary: 查询某用户签到状态
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckIn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/submissions:
+    post:
+      tags: [Submissions]
+      summary: 创建作品提交
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubmissionRequest'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Submissions]
+      summary: 全部提交列表
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Submission'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/submissions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    get:
+      tags: [Submissions]
+      summary: 获取提交
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Submissions]
+      summary: 更新提交
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubmissionRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Submissions]
+      summary: 删除提交
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/submissions/event/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+    get:
+      tags: [Submissions]
+      summary: 某活动提交列表
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Submission'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/submissions/{id}/approve:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    patch:
+      tags: [Submissions]
+      summary: 审批提交
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionReviewRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/submissions/{id}/reject:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    patch:
+      tags: [Submissions]
+      summary: 拒绝提交
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionReviewRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/votes:
+    post:
+      tags: [Votes]
+      summary: 提交投票
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CastVoteRequest'
+      responses:
+        '201':
+          description: 投票成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vote'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/votes/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    get:
+      tags: [Votes]
+      summary: 查看投票详情
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vote'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Votes]
+      summary: 删除投票（仅主办方）
+      parameters:
+        - $ref: '#/components/parameters/OrganizerAddressQuery'
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/votes/event/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+    get:
+      tags: [Votes]
+      summary: 获取活动所有投票
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vote'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/votes/event/{eventId}/summary:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+    get:
+      tags: [Votes]
+      summary: 获取活动投票统计
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VoteSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/votes/submission/{submissionId}:
+    parameters:
+      - $ref: '#/components/parameters/SubmissionIdPathParam'
+    get:
+      tags: [Votes]
+      summary: 获取作品投票
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vote'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/events/{eventId}/judges:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+    get:
+      tags: [Judges]
+      summary: 获取评委白名单
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventJudge'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Judges]
+      summary: 添加评委
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddJudgeRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventJudge'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/events/{eventId}/judges/{judgeId}:
+    parameters:
+      - $ref: '#/components/parameters/EventIdPathParam'
+      - $ref: '#/components/parameters/JudgeIdPathParam'
+    delete:
+      tags: [Judges]
+      summary: 移除评委
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizerActionRequest'
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  parameters:
+    IdPathParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    EventIdPathParam:
+      name: eventId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    AddressPathParam:
+      name: address
+      in: path
+      required: true
+      schema:
+        type: string
+    SubmissionIdPathParam:
+      name: submissionId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    JudgeIdPathParam:
+      name: judgeId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    OrganizerAddressQuery:
+      name: organizer_address
+      in: query
+      required: false
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: 请求错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: 服务端错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      example:
+        error: resource not found
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+    CountResponse:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int64
+    EventStage:
+      type: string
+      enum: [registration, checkin, submission, voting, awards, ended]
+    AssetType:
+      type: string
+      enum: [erc20, native, nft]
+    SponsorshipStatus:
+      type: string
+      enum: [pending, approved, rejected, deposited]
+    TeamStatus:
+      type: string
+      enum: [pending, approved, rejected]
+    RegistrationStatus:
+      type: string
+      enum: [pending, approved, rejected, sbt_minted]
+    SubmissionStatus:
+      type: string
+      enum: [pending, approved, rejected]
+    Prize:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_id:
+          type: integer
+        rank:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        amount:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        registration_start_time:
+          type: string
+          format: date-time
+          nullable: true
+        registration_end_time:
+          type: string
+          format: date-time
+          nullable: true
+        checkin_start_time:
+          type: string
+          format: date-time
+          nullable: true
+        checkin_end_time:
+          type: string
+          format: date-time
+          nullable: true
+        submission_start_time:
+          type: string
+          format: date-time
+          nullable: true
+        submission_end_time:
+          type: string
+          format: date-time
+          nullable: true
+        voting_start_time:
+          type: string
+          format: date-time
+          nullable: true
+        voting_end_time:
+          type: string
+          format: date-time
+          nullable: true
+        current_stage:
+          $ref: '#/components/schemas/EventStage'
+        organizer_address:
+          type: string
+        allow_sponsor_voting:
+          type: boolean
+        allow_public_voting:
+          type: boolean
+        contract_address:
+          type: string
+        on_chain:
+          type: boolean
+        prizes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prize'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateEventRequest:
+      type: object
+      required: [name, start_time, end_time, organizer_address]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        registration_start_time:
+          type: string
+          format: date-time
+          nullable: true
+        registration_end_time:
+          type: string
+          format: date-time
+          nullable: true
+        checkin_start_time:
+          type: string
+          format: date-time
+          nullable: true
+        checkin_end_time:
+          type: string
+          format: date-time
+          nullable: true
+        submission_start_time:
+          type: string
+          format: date-time
+          nullable: true
+        submission_end_time:
+          type: string
+          format: date-time
+          nullable: true
+        voting_start_time:
+          type: string
+          format: date-time
+          nullable: true
+        voting_end_time:
+          type: string
+          format: date-time
+          nullable: true
+        organizer_address:
+          type: string
+        allow_sponsor_voting:
+          type: boolean
+        allow_public_voting:
+          type: boolean
+        on_chain:
+          type: boolean
+        prizes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreatePrizeRequest'
+    CreatePrizeRequest:
+      type: object
+      required: [rank, name]
+      properties:
+        rank:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        amount:
+          type: string
+    UpdateEventRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        registration_start_time:
+          type: string
+          format: date-time
+        registration_end_time:
+          type: string
+          format: date-time
+        checkin_start_time:
+          type: string
+          format: date-time
+        checkin_end_time:
+          type: string
+          format: date-time
+        submission_start_time:
+          type: string
+          format: date-time
+        submission_end_time:
+          type: string
+          format: date-time
+        voting_start_time:
+          type: string
+          format: date-time
+        voting_end_time:
+          type: string
+          format: date-time
+        allow_sponsor_voting:
+          type: boolean
+        allow_public_voting:
+          type: boolean
+        prizes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreatePrizeRequest'
+    UpdateStageRequest:
+      type: object
+      required: [stage]
+      properties:
+        stage:
+          $ref: '#/components/schemas/EventStage'
+    Sponsor:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        logo_url:
+          type: string
+        website_url:
+          type: string
+        address:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateSponsorRequest:
+      type: object
+      required: [name, address]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        logo_url:
+          type: string
+        website_url:
+          type: string
+        address:
+          type: string
+    UpdateSponsorRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        logo_url:
+          type: string
+        website_url:
+          type: string
+    Sponsorship:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_id:
+          type: integer
+        sponsor_id:
+          type: integer
+        asset_type:
+          $ref: '#/components/schemas/AssetType'
+        token_address:
+          type: string
+        token_id:
+          type: string
+        amount:
+          type: string
+        amount_display:
+          type: string
+        status:
+          $ref: '#/components/schemas/SponsorshipStatus'
+        deposit_tx_hash:
+          type: string
+        voting_weight:
+          type: string
+        voting_power:
+          type: number
+          format: float
+        benefits:
+          type: string
+        contract_address:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateSponsorshipRequest:
+      type: object
+      required: [event_id, sponsor_id, asset_type, amount]
+      properties:
+        event_id:
+          type: integer
+        sponsor_id:
+          type: integer
+        asset_type:
+          $ref: '#/components/schemas/AssetType'
+        token_address:
+          type: string
+        token_id:
+          type: string
+        amount:
+          type: string
+        amount_display:
+          type: string
+        voting_weight:
+          type: string
+        voting_power:
+          type: number
+          format: float
+        benefits:
+          type: string
+    OrganizerActionRequest:
+      type: object
+      required: [organizer_address]
+      properties:
+        organizer_address:
+          type: string
+    DepositStatusRequest:
+      type: object
+      required: [tx_hash]
+      properties:
+        tx_hash:
+          type: string
+    FundingPool:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_id:
+          type: integer
+        contract_address:
+          type: string
+        total_amount:
+          type: string
+        locked_until:
+          type: string
+          format: date-time
+          nullable: true
+        distributed:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateFundingPoolRequest:
+      type: object
+      required: [event_id, contract_address]
+      properties:
+        event_id:
+          type: integer
+        contract_address:
+          type: string
+    UpdateFundingPoolRequest:
+      type: object
+      properties:
+        total_amount:
+          type: string
+    SetLockedUntilRequest:
+      type: object
+      required: [locked_until]
+      properties:
+        locked_until:
+          type: string
+          format: date-time
+    TeamMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        team_id:
+          type: integer
+        address:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        skills:
+          type: string
+        role:
+          type: string
+        joined_at:
+          type: string
+          format: date-time
+    Team:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        leader_address:
+          type: string
+        max_members:
+          type: integer
+        status:
+          $ref: '#/components/schemas/TeamStatus'
+        skills:
+          type: string
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamMember'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateTeamRequest:
+      type: object
+      required: [name, leader_address]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        leader_address:
+          type: string
+        max_members:
+          type: integer
+        skills:
+          type: string
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateTeamMemberRequest'
+    CreateTeamMemberRequest:
+      type: object
+      required: [address]
+      properties:
+        address:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        skills:
+          type: string
+        role:
+          type: string
+    UpdateTeamRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        max_members:
+          type: integer
+        skills:
+          type: string
+    AddMemberRequest:
+      $ref: '#/components/schemas/CreateTeamMemberRequest'
+    Registration:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_id:
+          type: integer
+        team_id:
+          type: integer
+        status:
+          $ref: '#/components/schemas/RegistrationStatus'
+        project_name:
+          type: string
+        project_description:
+          type: string
+        sbt_token_id:
+          type: integer
+          format: int64
+          nullable: true
+        sbt_tx_hash:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateRegistrationRequest:
+      type: object
+      required: [event_id, team_id]
+      properties:
+        event_id:
+          type: integer
+        team_id:
+          type: integer
+        project_name:
+          type: string
+        project_description:
+          type: string
+    UpdateSBTStatusRequest:
+      type: object
+      required: [token_id, tx_hash]
+      properties:
+        token_id:
+          type: integer
+          format: int64
+        tx_hash:
+          type: string
+    CheckIn:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_id:
+          type: integer
+        user_address:
+          type: string
+        team_id:
+          type: integer
+          nullable: true
+        signature:
+          type: string
+        message:
+          type: string
+        tx_hash:
+          type: string
+        check_in_time:
+          type: string
+          format: date-time
+        ip_address:
+          type: string
+        device_info:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CheckInRequest:
+      type: object
+      required: [event_id, user_address, signature, message]
+      properties:
+        event_id:
+          type: integer
+        user_address:
+          type: string
+        signature:
+          type: string
+        message:
+          type: string
+        team_id:
+          type: integer
+          nullable: true
+        ip_address:
+          type: string
+        device_info:
+          type: string
+    CheckInQRCodeResponse:
+      type: object
+      properties:
+        event_id:
+          type: integer
+        message:
+          type: string
+        qr_code:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+    UpdateTxHashRequest:
+      type: object
+      required: [tx_hash]
+      properties:
+        tx_hash:
+          type: string
+    SubmissionFile:
+      type: object
+      properties:
+        id:
+          type: integer
+        submission_id:
+          type: integer
+        file_name:
+          type: string
+        file_type:
+          type: string
+        url:
+          type: string
+        hash:
+          type: string
+    Submission:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_id:
+          type: integer
+        team_id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        github_repo:
+          type: string
+        demo_url:
+          type: string
+        documentation:
+          type: string
+        submission_hash:
+          type: string
+        storage_url:
+          type: string
+        status:
+          $ref: '#/components/schemas/SubmissionStatus'
+        reviewer_comment:
+          type: string
+        submitted_by:
+          type: string
+        submitted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubmissionFile'
+    SubmissionFileRequest:
+      type: object
+      properties:
+        file_name:
+          type: string
+        file_type:
+          type: string
+        url:
+          type: string
+        hash:
+          type: string
+    CreateSubmissionRequest:
+      type: object
+      required: [event_id, team_id, title, submitted_by]
+      properties:
+        event_id:
+          type: integer
+        team_id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        github_repo:
+          type: string
+        demo_url:
+          type: string
+        documentation:
+          type: string
+        storage_url:
+          type: string
+        submitted_by:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubmissionFileRequest'
+    UpdateSubmissionRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        github_repo:
+          type: string
+        demo_url:
+          type: string
+        documentation:
+          type: string
+        storage_url:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubmissionFileRequest'
+    SubmissionReviewRequest:
+      type: object
+      required: [organizer_address]
+      properties:
+        organizer_address:
+          type: string
+        comment:
+          type: string
+    Vote:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_id:
+          type: integer
+        submission_id:
+          type: integer
+        voter_address:
+          type: string
+        voter_type:
+          type: string
+          enum: [judge, sponsor, public]
+        weight:
+          type: number
+          format: float
+        reason:
+          type: string
+        signature:
+          type: string
+        offchain_proof:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    CastVoteRequest:
+      type: object
+      required: [event_id, submission_id, voter_address, voter_type]
+      properties:
+        event_id:
+          type: integer
+        submission_id:
+          type: integer
+        voter_address:
+          type: string
+        voter_type:
+          type: string
+          enum: [judge, sponsor, public]
+        reason:
+          type: string
+        signature:
+          type: string
+        offchain_proof:
+          type: string
+        weight:
+          type: number
+          format: float
+    VoteSummary:
+      type: object
+      properties:
+        submission_id:
+          type: integer
+        submission_title:
+          type: string
+        total_weight:
+          type: number
+          format: float
+        judge_weight:
+          type: number
+          format: float
+        sponsor_weight:
+          type: number
+          format: float
+        public_weight:
+          type: number
+          format: float
+        vote_count:
+          type: integer
+          format: int64
+    EventJudge:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_id:
+          type: integer
+        address:
+          type: string
+        weight:
+          type: number
+          format: float
+        max_votes:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    AddJudgeRequest:
+      type: object
+      required: [address, organizer_address]
+      properties:
+        address:
+          type: string
+        weight:
+          type: number
+          format: float
+        max_votes:
+          type: integer
+        organizer_address:
+          type: string

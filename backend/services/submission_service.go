@@ -82,12 +82,9 @@ func (s *submissionService) CreateSubmission(req *CreateSubmissionRequest) (*mod
 	}
 
 	// Validate team exists
-	team, err := s.teamRepo.GetByID(req.TeamID)
-	if err != nil {
+	if _, err := s.teamRepo.GetByID(req.TeamID); err != nil {
 		return nil, errors.New("team not found")
 	}
-
-	// Ensure team belongs to event (via registration) – optional check could be added later
 
 	// Ensure submissions are unique per team/event
 	existing, _ := s.submissionRepo.GetByTeamAndEvent(req.TeamID, req.EventID)

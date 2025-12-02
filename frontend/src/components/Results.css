@@ -1,0 +1,164 @@
+.results-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.results-header h1 {
+  margin: 0;
+}
+
+.results-header .subtitle {
+  margin-top: 4px;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.results-layout {
+  display: grid;
+  grid-template-columns: 2.2fr 1.3fr;
+  gap: 24px;
+}
+
+@media (max-width: 960px) {
+  .results-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.results-table th,
+.results-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.results-table thead th {
+  background: #fafafa;
+  font-weight: 600;
+}
+
+.results-table tbody tr:nth-child(even) {
+  background: #fcfcfc;
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.rank-1 {
+  background: linear-gradient(135deg, #f5af19, #f12711);
+}
+
+.rank-2 {
+  background: linear-gradient(135deg, #bdc3c7, #2c3e50);
+}
+
+.rank-3 {
+  background: linear-gradient(135deg, #cd7f32, #8e5a2a);
+}
+
+.rank-4,
+.rank-5,
+.rank-6,
+.rank-7,
+.rank-8,
+.rank-9,
+.rank-10 {
+  background: #666;
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.empty-state {
+  padding: 16px;
+  text-align: center;
+  color: #666;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.prize-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.prize-name {
+  font-weight: 600;
+}
+
+.prize-amount,
+.prize-amount-inline {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.prize-summary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prize-summary-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.prize-summary-text {
+  flex: 1;
+}
+
+.prize-summary-main {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.prize-summary-desc {
+  margin-top: 2px;
+  font-size: 0.88rem;
+  color: #555;
+}
+
+.hint {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #777;
+}
+
+

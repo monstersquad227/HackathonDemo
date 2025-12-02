@@ -49,6 +49,7 @@
 - `status`: 状态（pending/approved/rejected/deposited）
 - `deposit_tx_hash`: 存入交易哈希
 - `voting_weight`: 投票权重
+- `voting_power`: 数值化的投票权，用于投票计分
 - `benefits`: 权益描述
 
 ### FundingPool（奖金池）

@@ -43,6 +43,7 @@ func main() {
 	registrationController := controllers.NewRegistrationController(db)
 	checkInController := controllers.NewCheckInController(db)
 	submissionController := controllers.NewSubmissionController(db)
+	voteController := controllers.NewVoteController(db)
 
 	// API routes
 	api := r.Group("/api/v1")
@@ -56,6 +57,9 @@ func main() {
 			events.PUT("/:id", eventController.UpdateEvent)
 			events.DELETE("/:id", eventController.DeleteEvent)
 			events.PATCH("/:id/stage", eventController.UpdateStage)
+			events.GET("/:eventId/judges", voteController.ListJudges)
+			events.POST("/:eventId/judges", voteController.AddJudge)
+			events.DELETE("/:eventId/judges/:judgeId", voteController.RemoveJudge)
 		}
 
 		// Sponsors
@@ -145,9 +149,19 @@ func main() {
 			submissions.PATCH("/:id/reject", submissionController.RejectSubmission)
 			submissions.DELETE("/:id", submissionController.DeleteSubmission)
 		}
+
+		// Votes
+		votes := api.Group("/votes")
+		{
+			votes.POST("", voteController.CastVote)
+			votes.GET("/event/:eventId", voteController.ListVotesByEvent)
+			votes.GET("/event/:eventId/summary", voteController.GetEventSummary)
+			votes.GET("/submission/:submissionId", voteController.ListVotesBySubmission)
+			votes.GET("/:id", voteController.GetVote)
+			votes.DELETE("/:id", voteController.DeleteVote)
+		}
 	}
 
 	// Start server
 	r.Run(":" + cfg.Port)
 }
-

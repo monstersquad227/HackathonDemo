@@ -11,6 +11,8 @@ import CheckInManagement from './components/CheckInManagement'
 import CheckIn from './components/CheckIn'
 import SubmissionList from './components/SubmissionList'
 import SubmissionForm from './components/SubmissionForm'
+import VotingPanel from './components/VotingPanel'
+import Results from './components/Results'
 import './App.css'
 
 function App() {
@@ -41,6 +43,8 @@ function App() {
             <Route path="/events/:eventId/checkin" element={<CheckIn />} />
             <Route path="/events/:eventId/submissions" element={<SubmissionList />} />
             <Route path="/events/:eventId/submit" element={<SubmissionForm />} />
+            <Route path="/events/:eventId/voting" element={<VotingPanel />} />
+            <Route path="/events/:eventId/results" element={<Results />} />
             <Route path="/sponsors" element={<SponsorManagement />} />
             <Route path="/teams" element={<TeamManagement />} />
           </Routes>

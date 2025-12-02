@@ -36,15 +36,16 @@ func NewSponsorshipService(
 }
 
 type CreateSponsorshipRequest struct {
-	EventID       uint                `json:"event_id" binding:"required"`
-	SponsorID     uint                `json:"sponsor_id" binding:"required"`
-	AssetType     models.AssetType    `json:"asset_type" binding:"required"`
-	TokenAddress  string              `json:"token_address"` // ERC20 address or NFT contract
-	TokenID       string              `json:"token_id"`      // NFT token ID
-	Amount        string              `json:"amount" binding:"required"`
-	AmountDisplay string              `json:"amount_display"`
-	VotingWeight  string              `json:"voting_weight"` // e.g., "1 USDC = 1 vote"
-	Benefits      string              `json:"benefits"`
+	EventID       uint             `json:"event_id" binding:"required"`
+	SponsorID     uint             `json:"sponsor_id" binding:"required"`
+	AssetType     models.AssetType `json:"asset_type" binding:"required"`
+	TokenAddress  string           `json:"token_address"` // ERC20 address or NFT contract
+	TokenID       string           `json:"token_id"`      // NFT token ID
+	Amount        string           `json:"amount" binding:"required"`
+	AmountDisplay string           `json:"amount_display"`
+	VotingWeight  string           `json:"voting_weight"` // e.g., "1 USDC = 1 vote"
+	VotingPower   float64          `json:"voting_power"`  // numeric multiplier for sponsor voting
+	Benefits      string           `json:"benefits"`
 }
 
 func (s *sponsorshipService) CreateSponsorship(req *CreateSponsorshipRequest) (*models.Sponsorship, error) {
@@ -87,6 +88,7 @@ func (s *sponsorshipService) CreateSponsorship(req *CreateSponsorshipRequest) (*
 		AmountDisplay: req.AmountDisplay,
 		Status:        models.SponsorshipStatusPending,
 		VotingWeight:  req.VotingWeight,
+		VotingPower:   req.VotingPower,
 		Benefits:      req.Benefits,
 	}
 
@@ -183,4 +185,3 @@ func (s *sponsorshipService) UpdateDepositStatus(id uint, txHash string) (*model
 func (s *sponsorshipService) DeleteSponsorship(id uint) error {
 	return s.sponsorshipRepo.Delete(id)
 }
-

@@ -44,9 +44,9 @@ func NewCheckInService(
 }
 
 type CheckInQRCodeResponse struct {
-	EventID  uint   `json:"event_id"`
-	Message  string `json:"message"`
-	QRCode   string `json:"qr_code"` // Base64 encoded QR code or URL
+	EventID   uint      `json:"event_id"`
+	Message   string    `json:"message"`
+	QRCode    string    `json:"qr_code"` // Base64 encoded QR code or URL
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
@@ -199,7 +199,7 @@ func (s *checkInService) verifySignature(address, message, signature string) err
 	recoveredAddr := crypto.PubkeyToAddress(*pubKey)
 
 	// Compare addresses
-	if !common.HexToAddress(address).Equal(recoveredAddr) {
+	if common.HexToAddress(address) != recoveredAddr {
 		return errors.New("signature does not match address")
 	}
 
@@ -240,4 +240,3 @@ func (s *checkInService) UpdateTxHash(id uint, txHash string) (*models.CheckIn, 
 func (s *checkInService) DeleteCheckIn(id uint) error {
 	return s.checkInRepo.Delete(id)
 }
-
