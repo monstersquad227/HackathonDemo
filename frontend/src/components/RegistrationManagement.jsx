@@ -3,6 +3,18 @@ import { useParams } from 'react-router-dom'
 import { registrationApi } from '../api/registrationApi'
 import { teamApi } from '../api/teamApi'
 import './RegistrationManagement.css'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import TextField from '@mui/material/TextField'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import Paper from '@mui/material/Paper'
+import Grid from '@mui/material/Grid'
+import Chip from '@mui/material/Chip'
+import Alert from '@mui/material/Alert'
 
 const RegistrationManagement = () => {
   const { eventId } = useParams()
@@ -116,159 +128,188 @@ const RegistrationManagement = () => {
     return statusMap[status] || status
   }
 
-  if (loading) {
-    return <div className="loading">加载中...</div>
-  }
-
   return (
-    <div className="registration-management">
-      <h1>报名管理</h1>
-      {error && <div className="error-message">{error}</div>}
+    <Box>
+      <Typography variant="h4" component="h1" fontWeight={600} sx={{ mb: 3 }}>
+        报名管理
+      </Typography>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
-      <div className="card">
-        <div className="section-header">
-          <h2>创建报名</h2>
-          <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="btn btn-primary"
-          >
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">创建报名</Typography>
+          <Button variant="contained" onClick={() => setShowCreateForm(!showCreateForm)}>
             {showCreateForm ? '取消' : '创建报名'}
-          </button>
-        </div>
+          </Button>
+        </Box>
 
         {showCreateForm && (
-          <form onSubmit={handleSubmit} className="create-form">
-            <div className="form-group">
-              <label>选择队伍 *</label>
-              <select
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+          >
+            <FormControl fullWidth required>
+              <InputLabel id="team-select-label">选择队伍 *</InputLabel>
+              <Select
+                labelId="team-select-label"
+                label="选择队伍 *"
                 name="team_id"
                 value={formData.team_id}
                 onChange={handleChange}
-                required
               >
-                <option value="">请选择队伍</option>
                 {teams.map((team) => (
-                  <option key={team.id} value={team.id}>
+                  <MenuItem key={team.id} value={team.id}>
                     {team.name} ({team.members?.length || 0} 成员)
-                  </option>
+                  </MenuItem>
                 ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>项目名称</label>
-              <input
-                type="text"
-                name="project_name"
-                value={formData.project_name}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label>项目描述</label>
-              <textarea
-                name="project_description"
-                value={formData.project_description}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary">
-                提交报名
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
+              </Select>
+            </FormControl>
 
-      <div className="card">
-        <h2>报名列表 ({registrations.length})</h2>
-        {registrations.length === 0 ? (
-          <div className="empty-state">暂无报名记录</div>
-        ) : (
-          <div className="registrations-list">
-            {registrations.map((registration) => (
-              <div key={registration.id} className="registration-card">
-                <div className="registration-header">
-                  <h3>{registration.team?.name || '未知队伍'}</h3>
-                  <span
-                    className={`status-badge ${getStatusBadgeClass(
-                      registration.status
-                    )}`}
-                  >
-                    {getStatusName(registration.status)}
-                  </span>
-                </div>
-                <div className="registration-info">
-                  {registration.project_name && (
-                    <p>
-                      <strong>项目名称:</strong> {registration.project_name}
-                    </p>
-                  )}
-                  {registration.project_description && (
-                    <p>
-                      <strong>项目描述:</strong> {registration.project_description}
-                    </p>
-                  )}
-                  <p>
-                    <strong>队伍成员:</strong>{' '}
-                    {registration.team?.members?.length || 0} 人
-                  </p>
-                  {registration.sbt_token_id && (
-                    <p>
-                      <strong>SBT Token ID:</strong> {registration.sbt_token_id}
-                    </p>
-                  )}
-                  {registration.sbt_tx_hash && (
-                    <p>
-                      <strong>SBT交易哈希:</strong>{' '}
-                      <a
-                        href={`https://etherscan.io/tx/${registration.sbt_tx_hash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {registration.sbt_tx_hash?.slice(0, 10)}...
-                      </a>
-                    </p>
-                  )}
-                </div>
-                {registration.status === 'pending' && (
-                  <div className="registration-actions">
-                    <input
-                      type="text"
-                      placeholder="主办方钱包地址"
-                      id={`organizer-${registration.id}`}
-                      className="organizer-input"
-                    />
-                    <button
-                      onClick={() =>
-                        handleApprove(
-                          registration.id,
-                          document.getElementById(`organizer-${registration.id}`).value
-                        )
-                      }
-                      className="btn btn-primary btn-sm"
-                    >
-                      批准
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleReject(
-                          registration.id,
-                          document.getElementById(`organizer-${registration.id}`).value
-                        )
-                      }
-                      className="btn btn-danger btn-sm"
-                    >
-                      拒绝
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+            <TextField
+              label="项目名称"
+              name="project_name"
+              value={formData.project_name}
+              onChange={handleChange}
+              fullWidth
+            />
+            <TextField
+              label="项目描述"
+              name="project_description"
+              value={formData.project_description}
+              onChange={handleChange}
+              multiline
+              rows={3}
+              fullWidth
+            />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button type="submit" variant="contained">
+                提交报名
+              </Button>
+            </Box>
+          </Box>
         )}
-      </div>
-    </div>
+      </Paper>
+
+      <Paper sx={{ p: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          报名列表 ({registrations.length})
+        </Typography>
+        {loading ? (
+          <Typography>加载中...</Typography>
+        ) : registrations.length === 0 ? (
+          <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>
+            <Typography>暂无报名记录</Typography>
+          </Box>
+        ) : (
+          <Grid container spacing={2}>
+            {registrations.map((registration) => (
+              <Grid item xs={12} md={6} key={registration.id}>
+                <Paper variant="outlined" sx={{ p: 2 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="subtitle1" noWrap>
+                      {registration.team?.name || '未知队伍'}
+                    </Typography>
+                    <Chip
+                      label={getStatusName(registration.status)}
+                      size="small"
+                      color={
+                        registration.status === 'approved'
+                          ? 'success'
+                          : registration.status === 'rejected'
+                          ? 'error'
+                          : registration.status === 'sbt_minted'
+                          ? 'primary'
+                          : 'warning'
+                      }
+                      variant="outlined"
+                    />
+                  </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 1 }}>
+                    {registration.project_name && (
+                      <Typography variant="body2">
+                        <strong>项目名称:</strong> {registration.project_name}
+                      </Typography>
+                    )}
+                    {registration.project_description && (
+                      <Typography variant="body2">
+                        <strong>项目描述:</strong> {registration.project_description}
+                      </Typography>
+                    )}
+                    <Typography variant="body2">
+                      <strong>队伍成员:</strong> {registration.team?.members?.length || 0} 人
+                    </Typography>
+                    {registration.sbt_token_id && (
+                      <Typography variant="body2">
+                        <strong>SBT Token ID:</strong> {registration.sbt_token_id}
+                      </Typography>
+                    )}
+                    {registration.sbt_tx_hash && (
+                      <Typography variant="body2">
+                        <strong>SBT 交易哈希:</strong>{' '}
+                        <a
+                          href={`https://etherscan.io/tx/${registration.sbt_tx_hash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {registration.sbt_tx_hash?.slice(0, 10)}...
+                        </a>
+                      </Typography>
+                    )}
+                  </Box>
+                  {registration.status === 'pending' && (
+                    <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                      <TextField
+                        placeholder="主办方钱包地址"
+                        size="small"
+                        fullWidth
+                        id={`organizer-${registration.id}`}
+                      />
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={() =>
+                          handleApprove(
+                            registration.id,
+                            document.getElementById(`organizer-${registration.id}`).value
+                          )
+                        }
+                      >
+                        批准
+                      </Button>
+                      <Button
+                        size="small"
+                        color="error"
+                        variant="outlined"
+                        onClick={() =>
+                          handleReject(
+                            registration.id,
+                            document.getElementById(`organizer-${registration.id}`).value
+                          )
+                        }
+                      >
+                        拒绝
+                      </Button>
+                    </Box>
+                  )}
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Paper>
+    </Box>
   )
 }
 

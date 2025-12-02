@@ -3,6 +3,11 @@ import { useParams } from 'react-router-dom'
 import { ethers } from 'ethers'
 import { checkinApi } from '../api/checkinApi'
 import './CheckIn.css'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import TextField from '@mui/material/TextField'
+import Alert from '@mui/material/Alert'
 
 const CheckIn = () => {
   const { eventId } = useParams()
@@ -126,15 +131,17 @@ const CheckIn = () => {
 
   if (checkInStatus) {
     return (
-      <div className="checkin-page">
-        <div className="card success-card">
-          <h1>✓ 签到成功</h1>
-          <div className="checkin-info">
-            <p>
+      <Box sx={{ maxWidth: 600, mx: 'auto' }}>
+        <Box sx={{ p: 3, borderRadius: 2, bgcolor: 'success.light', color: 'success.contrastText' }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            ✓ 签到成功
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Typography variant="body1">
               <strong>签到时间:</strong> {formatDate(checkInStatus.check_in_time)}
-            </p>
+            </Typography>
             {checkInStatus.tx_hash && (
-              <p>
+              <Typography variant="body1">
                 <strong>交易哈希:</strong>{' '}
                 <a
                   href={`https://etherscan.io/tx/${checkInStatus.tx_hash}`}
@@ -143,77 +150,96 @@ const CheckIn = () => {
                 >
                   {checkInStatus.tx_hash?.slice(0, 10)}...
                 </a>
-              </p>
+              </Typography>
             )}
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Box>
     )
   }
 
   return (
-    <div className="checkin-page">
-      <h1>活动签到</h1>
-      {error && <div className="error-message">{error}</div>}
+    <Box sx={{ maxWidth: 700, mx: 'auto' }}>
+      <Typography variant="h4" component="h1" gutterBottom fontWeight={600}>
+        活动签到
+      </Typography>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
       {success && (
-        <div className="success-message">签到成功！</div>
+        <Alert severity="success" sx={{ mb: 2 }}>
+          签到成功！
+        </Alert>
       )}
 
-      <div className="card">
-        <h2>签到步骤</h2>
-        <ol className="steps-list">
+      <Box sx={{ mb: 3, p: 2, borderRadius: 2, bgcolor: 'grey.50' }}>
+        <Typography variant="h6" gutterBottom>
+          签到步骤
+        </Typography>
+        <ol style={{ paddingLeft: '1.5rem', margin: 0 }}>
           <li>连接钱包</li>
           <li>扫描二维码获取签名消息</li>
           <li>对消息进行签名</li>
           <li>提交签到</li>
         </ol>
-      </div>
+      </Box>
 
-      <div className="card">
-        <h2>签到操作</h2>
+      <Box sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1 }}>
         {!userAddress ? (
-          <button onClick={connectWallet} className="btn btn-primary btn-large">
+          <Button
+            variant="contained"
+            size="large"
+            onClick={connectWallet}
+            sx={{ mb: 2 }}
+          >
             连接钱包
-          </button>
+          </Button>
         ) : (
-          <div className="wallet-connected">
-            <p>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2">
               <strong>已连接:</strong> {userAddress?.slice(0, 10)}...
-            </p>
-          </div>
+            </Typography>
+          </Box>
         )}
 
-        <div className="form-group">
-          <label>签名消息</label>
-          <div className="message-input-group">
-            <textarea
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <TextField
+              label="签名消息"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="请扫描二维码获取签名消息"
-              rows="4"
+              multiline
+              rows={4}
+              fullWidth
             />
-            <button onClick={scanQRCode} className="btn btn-secondary">
+            <Button variant="outlined" onClick={scanQRCode} sx={{ whiteSpace: 'nowrap', height: 'fit-content' }}>
               扫描二维码
-            </button>
-          </div>
-        </div>
+            </Button>
+          </Box>
 
-        {signature && (
-          <div className="form-group">
-            <label>签名结果</label>
-            <input type="text" value={signature} readOnly className="signature-input" />
-          </div>
-        )}
+          {signature && (
+            <TextField
+              label="签名结果"
+              value={signature}
+              InputProps={{ readOnly: true }}
+              fullWidth
+            />
+          )}
 
-        <button
-          onClick={signMessage}
-          disabled={loading || !message || !userAddress}
-          className="btn btn-primary btn-large"
-        >
-          {loading ? '处理中...' : '确认签到'}
-        </button>
-      </div>
-    </div>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={signMessage}
+            disabled={loading || !message || !userAddress}
+          >
+            {loading ? '处理中...' : '确认签到'}
+          </Button>
+        </Box>
+      </Box>
+    </Box>
   )
 }
 

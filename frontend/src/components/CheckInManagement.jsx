@@ -2,6 +2,17 @@ import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { checkinApi } from '../api/checkinApi'
 import './CheckInManagement.css'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import Paper from '@mui/material/Paper'
+import Alert from '@mui/material/Alert'
+import Table from '@mui/material/Table'
+import TableHead from '@mui/material/TableHead'
+import TableBody from '@mui/material/TableBody'
+import TableRow from '@mui/material/TableRow'
+import TableCell from '@mui/material/TableCell'
+import TableContainer from '@mui/material/TableContainer'
 
 const CheckInManagement = () => {
   const { eventId } = useParams()
@@ -81,116 +92,147 @@ const CheckInManagement = () => {
     document.body.removeChild(link)
   }
 
-  if (loading) {
-    return <div className="loading">加载中...</div>
-  }
-
   return (
-    <div className="checkin-management">
-      <div className="page-header">
-        <h1>签到管理</h1>
-        <div className="header-actions">
-          <button onClick={handleGenerateQRCode} className="btn btn-primary">
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" component="h1" fontWeight={600}>
+          签到管理
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button variant="contained" onClick={handleGenerateQRCode}>
             生成签到二维码
-          </button>
-          <button onClick={exportToCSV} className="btn btn-secondary">
+          </Button>
+          <Button variant="outlined" onClick={exportToCSV}>
             导出签到记录
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Box>
+      </Box>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
-      <div className="card stats-card">
-        <h2>签到统计</h2>
-        <div className="stats">
-          <div className="stat-item">
-            <span className="stat-label">总签到人数</span>
-            <span className="stat-value">{checkInCount}</span>
-          </div>
-        </div>
-      </div>
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          签到统计
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 4 }}>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              总签到人数
+            </Typography>
+            <Typography variant="h4" fontWeight={600}>
+              {checkInCount}
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
 
       {showQRCode && qrCode && (
-        <div className="card qrcode-card">
-          <h2>签到二维码</h2>
-          <div className="qrcode-content">
-            <div className="qrcode-message">
-              <p>
-                <strong>活动ID:</strong> {qrCode.event_id}
-              </p>
-              <p>
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            签到二维码
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Typography variant="body2">
+              <strong>活动ID:</strong> {qrCode.event_id}
+            </Typography>
+            <Box>
+              <Typography variant="body2" gutterBottom>
                 <strong>签名消息:</strong>
-              </p>
-              <pre className="message-text">{qrCode.message}</pre>
-              <p>
-                <strong>有效期至:</strong> {new Date(qrCode.expires_at).toLocaleString('zh-CN')}
-              </p>
-            </div>
-            <div className="qrcode-instructions">
-              <h3>使用说明</h3>
-              <ol>
+              </Typography>
+              <Box
+                component="pre"
+                sx={{
+                  p: 2,
+                  borderRadius: 1,
+                  bgcolor: 'grey.100',
+                  overflow: 'auto',
+                  maxHeight: 200,
+                }}
+              >
+                {qrCode.message}
+              </Box>
+            </Box>
+            <Typography variant="body2">
+              <strong>有效期至:</strong>{' '}
+              {new Date(qrCode.expires_at).toLocaleString('zh-CN')}
+            </Typography>
+            <Box>
+              <Typography variant="subtitle1" gutterBottom>
+                使用说明
+              </Typography>
+              <ol style={{ paddingLeft: '1.5rem', margin: 0 }}>
                 <li>用户扫描二维码获取签名消息</li>
                 <li>使用钱包对消息进行签名</li>
                 <li>提交签名完成签到</li>
               </ol>
-            </div>
-          </div>
-          <button onClick={() => setShowQRCode(false)} className="btn btn-secondary">
-            关闭
-          </button>
-        </div>
+            </Box>
+            <Box sx={{ mt: 1 }}>
+              <Button variant="outlined" onClick={() => setShowQRCode(false)}>
+                关闭
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
       )}
 
-      <div className="card">
-        <h2>签到记录 ({checkIns.length})</h2>
-        {checkIns.length === 0 ? (
-          <div className="empty-state">暂无签到记录</div>
+      <Paper sx={{ p: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          签到记录 ({checkIns.length})
+        </Typography>
+        {loading ? (
+          <Typography>加载中...</Typography>
+        ) : checkIns.length === 0 ? (
+          <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>
+            <Typography>暂无签到记录</Typography>
+          </Box>
         ) : (
-          <div className="checkins-list">
-            <table className="checkins-table">
-              <thead>
-                <tr>
-                  <th>用户地址</th>
-                  <th>队伍</th>
-                  <th>签到时间</th>
-                  <th>IP地址</th>
-                  <th>设备信息</th>
-                  <th>交易哈希</th>
-                </tr>
-              </thead>
-              <tbody>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>用户地址</TableCell>
+                  <TableCell>队伍</TableCell>
+                  <TableCell>签到时间</TableCell>
+                  <TableCell>IP地址</TableCell>
+                  <TableCell>设备信息</TableCell>
+                  <TableCell>交易哈希</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {checkIns.map((checkIn) => (
-                  <tr key={checkIn.id}>
-                    <td className="address-cell">
+                  <TableRow key={checkIn.id}>
+                    <TableCell>
                       {checkIn.user_address?.slice(0, 10)}...
-                    </td>
-                    <td>{checkIn.team?.name || '-'}</td>
-                    <td>{formatDate(checkIn.check_in_time)}</td>
-                    <td>{checkIn.ip_address || '-'}</td>
-                    <td>{checkIn.device_info || '-'}</td>
-                    <td>
+                    </TableCell>
+                    <TableCell>{checkIn.team?.name || '-'}</TableCell>
+                    <TableCell>{formatDate(checkIn.check_in_time)}</TableCell>
+                    <TableCell>{checkIn.ip_address || '-'}</TableCell>
+                    <TableCell>{checkIn.device_info || '-'}</TableCell>
+                    <TableCell>
                       {checkIn.tx_hash ? (
                         <a
                           href={`https://etherscan.io/tx/${checkIn.tx_hash}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="tx-link"
                         >
                           {checkIn.tx_hash?.slice(0, 10)}...
                         </a>
                       ) : (
                         '-'
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
-      </div>
-    </div>
+      </Paper>
+    </Box>
   )
 }
 

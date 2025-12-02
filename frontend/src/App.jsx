@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Link as RouterLink } from 'react-router-dom'
 import EventList from './components/EventList'
 import EventCreate from './components/EventCreate'
 import EventDetail from './components/EventDetail'
@@ -14,25 +14,49 @@ import SubmissionForm from './components/SubmissionForm'
 import VotingPanel from './components/VotingPanel'
 import Results from './components/Results'
 import './App.css'
+import AppBar from '@mui/material/AppBar'
+import Toolbar from '@mui/material/Toolbar'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import Container from '@mui/material/Container'
+import Box from '@mui/material/Box'
 
 function App() {
   return (
     <Router>
-      <div className="App">
-        <nav className="navbar">
-          <div className="container">
-            <Link to="/" className="logo">
-              <h1>Hackathon Platform</h1>
-            </Link>
-            <div className="nav-links">
-              <Link to="/">活动列表</Link>
-              <Link to="/events/create">创建活动</Link>
-              <Link to="/sponsors">赞助商管理</Link>
-              <Link to="/teams">队伍管理</Link>
-            </div>
-          </div>
-        </nav>
-        <main className="container">
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <AppBar position="static" color="primary" elevation={2}>
+          <Toolbar>
+            <Typography
+              variant="h6"
+              component={RouterLink}
+              to="/"
+              sx={{
+                flexGrow: 1,
+                textDecoration: 'none',
+                color: 'inherit',
+                fontWeight: 600,
+              }}
+            >
+              Hackathon Platform
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button color="inherit" component={RouterLink} to="/">
+                活动列表
+              </Button>
+              <Button color="inherit" component={RouterLink} to="/events/create">
+                创建活动
+              </Button>
+              <Button color="inherit" component={RouterLink} to="/sponsors">
+                赞助商管理
+              </Button>
+              <Button color="inherit" component={RouterLink} to="/teams">
+                队伍管理
+              </Button>
+            </Box>
+          </Toolbar>
+        </AppBar>
+        <Container maxWidth="lg" sx={{ py: 3, flex: 1 }}>
           <Routes>
             <Route path="/" element={<EventList />} />
             <Route path="/events/create" element={<EventCreate />} />
@@ -48,8 +72,8 @@ function App() {
             <Route path="/sponsors" element={<SponsorManagement />} />
             <Route path="/teams" element={<TeamManagement />} />
           </Routes>
-        </main>
-      </div>
+        </Container>
+      </Box>
     </Router>
   )
 }

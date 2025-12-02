@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { sponsorApi } from '../api/sponsorApi'
 import './SponsorManagement.css'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import TextField from '@mui/material/TextField'
+import Grid from '@mui/material/Grid'
+import Paper from '@mui/material/Paper'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import CardMedia from '@mui/material/CardMedia'
+import Alert from '@mui/material/Alert'
 
 const SponsorManagement = () => {
   const [sponsors, setSponsors] = useState([])
@@ -58,121 +68,136 @@ const SponsorManagement = () => {
     }
   }
 
-  if (loading) {
-    return <div className="loading">加载中...</div>
-  }
-
   return (
-    <div className="sponsor-management">
-      <div className="page-header">
-        <h1>赞助商管理</h1>
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="btn btn-primary"
-        >
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" component="h1" fontWeight={600}>
+          赞助商管理
+        </Typography>
+        <Button variant="contained" onClick={() => setShowCreateForm(!showCreateForm)}>
           {showCreateForm ? '取消' : '创建赞助商'}
-        </button>
-      </div>
+        </Button>
+      </Box>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       {showCreateForm && (
-        <div className="card create-form">
-          <h2>创建赞助商</h2>
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>名称 *</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>描述</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label>Logo URL</label>
-              <input
-                type="url"
-                name="logo_url"
-                value={formData.logo_url}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label>网站 URL</label>
-              <input
-                type="url"
-                name="website_url"
-                value={formData.website_url}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="form-group">
-              <label>钱包地址 *</label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                placeholder="0x..."
-                required
-              />
-            </div>
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary">
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            创建赞助商
+          </Typography>
+          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              label="名称 *"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              fullWidth
+            />
+            <TextField
+              label="描述"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              multiline
+              rows={3}
+              fullWidth
+            />
+            <TextField
+              label="Logo URL"
+              type="url"
+              name="logo_url"
+              value={formData.logo_url}
+              onChange={handleChange}
+              fullWidth
+            />
+            <TextField
+              label="网站 URL"
+              type="url"
+              name="website_url"
+              value={formData.website_url}
+              onChange={handleChange}
+              fullWidth
+            />
+            <TextField
+              label="钱包地址 *"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder="0x..."
+              required
+              fullWidth
+            />
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 1 }}>
+              <Button type="submit" variant="contained">
                 创建
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCreateForm(false)}
-                className="btn btn-secondary"
-              >
+              </Button>
+              <Button variant="outlined" onClick={() => setShowCreateForm(false)}>
                 取消
-              </button>
-            </div>
-          </form>
-        </div>
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
       )}
 
-      {sponsors.length === 0 ? (
-        <div className="empty-state">
-          <p>暂无赞助商</p>
-        </div>
+      {loading ? (
+        <Typography>加载中...</Typography>
+      ) : sponsors.length === 0 ? (
+        <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
+          <Typography>暂无赞助商</Typography>
+        </Box>
       ) : (
-        <div className="sponsor-list">
+        <Grid container spacing={2}>
           {sponsors.map((sponsor) => (
-            <div key={sponsor.id} className="sponsor-card">
-              {sponsor.logo_url && (
-                <img src={sponsor.logo_url} alt={sponsor.name} className="sponsor-logo" />
-              )}
-              <h3>{sponsor.name}</h3>
-              <p className="sponsor-description">{sponsor.description}</p>
-              <div className="sponsor-info">
-                <p>
-                  <strong>地址:</strong> {sponsor.address?.slice(0, 10)}...
-                </p>
-                {sponsor.website_url && (
-                  <p>
-                    <a href={sponsor.website_url} target="_blank" rel="noopener noreferrer">
-                      访问网站
-                    </a>
-                  </p>
+            <Grid item xs={12} sm={6} md={4} key={sponsor.id}>
+              <Card>
+                {sponsor.logo_url && (
+                  <CardMedia
+                    component="img"
+                    height="140"
+                    image={sponsor.logo_url}
+                    alt={sponsor.name}
+                  />
                 )}
-              </div>
-            </div>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom noWrap>
+                    {sponsor.name}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 1.5, minHeight: 40 }}
+                  >
+                    {sponsor.description || '暂无描述'}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>地址:</strong>{' '}
+                    {sponsor.address ? `${sponsor.address.slice(0, 10)}...` : '-'}
+                  </Typography>
+                  {sponsor.website_url && (
+                    <Box sx={{ mt: 1 }}>
+                      <Button
+                        href={sponsor.website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="small"
+                      >
+                        访问网站
+                      </Button>
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
           ))}
-        </div>
+        </Grid>
       )}
-    </div>
+    </Box>
   )
 }
 
