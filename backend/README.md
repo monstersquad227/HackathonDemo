@@ -9,7 +9,7 @@
 - **语言**: Go 1.21+
 - **Web 框架**: Gin
 - **ORM**: GORM
-- **数据库**: PostgreSQL
+- **数据库**: MySQL
 
 ## 项目结构
 
@@ -42,16 +42,16 @@ go mod download
 
 ### 2. 配置数据库
 
-创建 PostgreSQL 数据库：
+创建 MySQL 数据库（示例）：
 
 ```sql
-CREATE DATABASE hackathon_db;
+CREATE DATABASE hackathon_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-设置环境变量（可选，默认值已配置）：
+设置环境变量（可选，默认值已配置为本地 MySQL）：
 
 ```bash
-export DATABASE_URL="host=localhost user=postgres password=postgres dbname=hackathon_db port=5432 sslmode=disable"
+export DATABASE_URL="root:password@tcp(127.0.0.1:3306)/hackathon_db?parseTime=true&charset=utf8mb4&loc=Local"
 export PORT=8080
 ```
 
@@ -135,16 +135,6 @@ Content-Type: application/json
 - `voting` - 投票中
 - `awards` - 颁奖
 - `ended` - 已结束
-
-### 投票系统
-
-- `POST /api/v1/votes`：投票，自动校验阶段、白名单、权重
-- `GET /api/v1/votes/event/:eventId`：查看活动所有投票记录
-- `GET /api/v1/votes/event/:eventId/summary`：按作品汇总评委/赞助商/公众票权
-- `GET /api/v1/votes/submission/:submissionId`：查看单个作品投票详情
-- `DELETE /api/v1/votes/:id?organizer_address=0x...`：异常票删除
-- `GET|POST /api/v1/events/:eventId/judges`：管理评委白名单、权重、票数上限
-- `DELETE /api/v1/events/:eventId/judges/:judgeId`：移除评委（请求体需带 organizer_address）
 
 ## 数据模型
 

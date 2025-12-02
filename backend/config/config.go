@@ -17,7 +17,9 @@ func Load() *Config {
 
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
-		databaseURL = "host=localhost user=postgres password=postgres dbname=hackathon_db port=5432 sslmode=disable"
+		// 默认使用本地 MySQL，注意根据实际账号调整
+		// 形式示例: username:password@tcp(host:3306)/dbname?parseTime=true&charset=utf8mb4&loc=Local
+		databaseURL = "root:password@tcp(127.0.0.1:3306)/hackathon_db?parseTime=true&charset=utf8mb4&loc=Local"
 	}
 
 	return &Config{

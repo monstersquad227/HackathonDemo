@@ -3,7 +3,7 @@ package database
 import (
 	"hackathon-platform/backend/models"
 
-	"gorm.io/driver/postgres"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -13,7 +13,7 @@ var DB *gorm.DB
 // Initialize connects to the database and runs migrations
 func Initialize(databaseURL string) *gorm.DB {
 	var err error
-	DB, err = gorm.Open(postgres.Open(databaseURL), &gorm.Config{
+	DB, err = gorm.Open(mysql.Open(databaseURL), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 
