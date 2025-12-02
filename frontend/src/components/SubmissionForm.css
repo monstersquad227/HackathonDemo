@@ -1,0 +1,37 @@
+.submission-form-page {
+  padding: 20px 0;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.submission-form-page h1 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.submission-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.file-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.form-section {
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 5px;
+}
+

@@ -1,16 +1,101 @@
-# React + Vite
+# Frontend - Event Management Module
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 概述
 
-Currently, two official plugins are available:
+这是 Hackathon Platform 的前端应用，使用 React 和 Vite 构建，实现活动管理模块的用户界面。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 技术栈
 
-## React Compiler
+- **框架**: React 18
+- **构建工具**: Vite
+- **路由**: React Router
+- **HTTP 客户端**: Axios
+- **Web3**: Ethers.js / Web3.js
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 项目结构
 
-## Expanding the ESLint configuration
+```
+frontend/
+├── src/
+│   ├── components/     # React 组件
+│   │   ├── EventList.jsx      # 活动列表
+│   │   ├── EventCreate.jsx    # 创建活动
+│   │   └── EventDetail.jsx    # 活动详情
+│   ├── api/           # API 调用
+│   │   └── eventApi.js
+│   ├── App.jsx        # 主应用组件
+│   ├── main.jsx       # 入口文件
+│   └── index.css      # 全局样式
+├── index.html
+├── package.json
+└── vite.config.js
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 安装和运行
+
+### 1. 安装依赖
+
+```bash
+cd frontend
+npm install
+```
+
+### 2. 运行开发服务器
+
+```bash
+npm run dev
+```
+
+应用将在 `http://localhost:3000` 启动。
+
+### 3. 构建生产版本
+
+```bash
+npm run build
+```
+
+## 功能特性
+
+### 活动列表页面
+- 显示所有活动
+- 活动卡片展示基本信息
+- 显示当前阶段状态
+- 点击卡片查看详情
+
+### 创建活动页面
+- 填写活动基本信息
+- 设置各阶段时间
+- 配置投票选项
+- 设置奖项信息
+
+### 活动详情页面
+- 查看完整活动信息
+- 查看阶段时间安排
+- 查看奖项配置
+- 更新活动阶段（主办方）
+
+## API 集成
+
+前端通过 `/api/v1/events` 端点与后端 API 通信。API 代理配置在 `vite.config.js` 中。
+
+## 样式说明
+
+- 使用 CSS 模块化设计
+- 响应式布局
+- 现代化 UI 设计
+- 阶段状态使用不同颜色标识
+
+## 开发
+
+### 添加新组件
+
+在 `src/components/` 目录下创建新的组件文件。
+
+### API 调用
+
+在 `src/api/` 目录下添加新的 API 调用函数。
+
+### 路由配置
+
+在 `src/App.jsx` 中添加新的路由。
+

@@ -1,0 +1,97 @@
+.checkin-page {
+  padding: 20px 0;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.success-card {
+  text-align: center;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.success-card h1 {
+  color: #155724;
+  margin-bottom: 20px;
+}
+
+.checkin-info {
+  text-align: left;
+  display: inline-block;
+}
+
+.checkin-info p {
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.checkin-info a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.checkin-info a:hover {
+  text-decoration: underline;
+}
+
+.steps-list {
+  padding-left: 20px;
+}
+
+.steps-list li {
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.wallet-connected {
+  padding: 15px;
+  background: #d4edda;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.wallet-connected p {
+  margin: 0;
+  color: #155724;
+}
+
+.message-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.message-input-group textarea {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: monospace;
+}
+
+.signature-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 12px;
+  background: #f8f9fa;
+}
+
+.btn-large {
+  width: 100%;
+  padding: 15px;
+  font-size: 18px;
+  margin-top: 20px;
+}
+
+.success-message {
+  background: #d4edda;
+  color: #155724;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+

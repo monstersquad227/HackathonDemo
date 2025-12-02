@@ -1,0 +1,120 @@
+.checkin-management {
+  padding: 20px 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.stats-card {
+  margin-bottom: 20px;
+}
+
+.stats {
+  display: flex;
+  gap: 30px;
+  margin-top: 15px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #007bff;
+}
+
+.qrcode-card {
+  margin-bottom: 20px;
+}
+
+.qrcode-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.qrcode-message {
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 5px;
+}
+
+.message-text {
+  background: white;
+  padding: 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.qrcode-instructions {
+  padding: 15px;
+  background: #e7f3ff;
+  border-radius: 5px;
+}
+
+.qrcode-instructions h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.qrcode-instructions ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.qrcode-instructions li {
+  margin-bottom: 5px;
+}
+
+.checkins-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.checkins-table th {
+  background: #f8f9fa;
+  padding: 12px;
+  text-align: left;
+  font-weight: bold;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.checkins-table td {
+  padding: 12px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.checkins-table tr:hover {
+  background: #f8f9fa;
+}
+
+.address-cell {
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.tx-link {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.tx-link:hover {
+  text-decoration: underline;
+}
+
