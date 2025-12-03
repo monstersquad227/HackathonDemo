@@ -47,7 +47,6 @@ function VotingPanel() {
   const [walletAddress, setWalletAddress] = useState('')
 
   useEffect(() => {
-    console.log('VotingPanel mounted, eventId:', eventId)
     if (eventId) {
       loadData()
     } else {
@@ -69,34 +68,26 @@ function VotingPanel() {
 
   const loadData = async () => {
     try {
-      console.log('开始加载数据，eventId:', eventId)
       setLoading(true)
       setError('')
       
       const [eventData, submissionsData, summaryData, votesData, judgeData] = await Promise.all([
         eventApi.getEventById(eventId).catch(err => {
-          console.error('获取活动数据失败:', err)
           throw new Error('获取活动数据失败: ' + (err.response?.data?.error || err.message))
         }),
-        submissionApi.getSubmissionsByEvent(eventId).catch(err => {
-          console.error('获取提交数据失败:', err)
+        submissionApi.getSubmissionsByEvent(eventId).catch(() => {
           return [] // 提交数据失败不影响页面显示
         }),
-        voteApi.getVoteSummary(eventId).catch(err => {
-          console.error('获取投票汇总失败:', err)
+        voteApi.getVoteSummary(eventId).catch(() => {
           return [] // 投票汇总失败不影响页面显示
         }),
-        voteApi.getVotesByEvent(eventId).catch(err => {
-          console.error('获取投票记录失败:', err)
+        voteApi.getVotesByEvent(eventId).catch(() => {
           return [] // 投票记录失败不影响页面显示
         }),
-        voteApi.getJudges(eventId).catch(err => {
-          console.error('获取评委列表失败:', err)
+        voteApi.getJudges(eventId).catch(() => {
           return [] // 评委列表失败不影响页面显示
         }),
       ])
-      
-      console.log('数据加载成功:', { eventData, submissionsCount: submissionsData.length })
       setEvent(eventData)
       setSubmissions(Array.isArray(submissionsData) ? submissionsData : [])
       setSummary(Array.isArray(summaryData) ? summaryData : [])
@@ -116,11 +107,9 @@ function VotingPanel() {
         setForm((prev) => ({ ...prev, submission_id: validSubmissions[0].id }))
       }
     } catch (err) {
-      console.error('加载投票数据失败:', err)
       setError(err.message || '加载数据失败，请刷新页面重试')
     } finally {
       setLoading(false)
-      console.log('数据加载完成，loading:', false)
     }
   }
 
@@ -262,8 +251,6 @@ function VotingPanel() {
     const format = (value) => (value ? new Date(value).toLocaleString('zh-CN') : '未设置')
     return `${format(voting_start_time)} ～ ${format(voting_end_time)}`
   }, [event])
-
-  console.log('VotingPanel render:', { loading, error, event: !!event, eventId, submissionsCount: submissions.length })
 
   // 确保至少显示一些内容，即使数据加载失败
   if (loading) {

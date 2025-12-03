@@ -70,7 +70,7 @@ const SubmissionForm = () => {
           }
         }
       } catch (err) {
-        console.error('加载已存在提交失败:', err)
+        // 静默处理错误
       } finally {
         setLoading(false)
       }
@@ -109,7 +109,6 @@ const SubmissionForm = () => {
       const team = await teamApi.getTeamById(teamId)
       setTeamInfo(team)
     } catch (err) {
-      console.error('加载队伍信息失败:', err)
       setTeamInfo(null)
     }
   }
@@ -136,7 +135,6 @@ const SubmissionForm = () => {
         return false
       }
     } catch (err) {
-      console.error('查找队伍失败:', err)
       setTeamInfo(null)
       return false
     } finally {
