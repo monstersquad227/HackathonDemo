@@ -337,3 +337,4 @@ func (s *voteService) RemoveJudge(eventID uint, judgeID uint, organizerAddress s
 func normalizeAddress(address string) string {
 	return strings.ToLower(strings.TrimSpace(address))
 }
+
