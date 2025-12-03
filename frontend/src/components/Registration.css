@@ -1,0 +1,19 @@
+.registration-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+

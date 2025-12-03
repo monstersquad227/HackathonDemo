@@ -25,7 +25,31 @@ func NewTeamRepository(db *gorm.DB) TeamRepository {
 }
 
 func (r *teamRepository) Create(team *models.Team) error {
-	return r.db.Create(team).Error
+	// 保存成员列表
+	members := team.Members
+	team.Members = nil
+	
+	// 先创建团队（不包含成员）
+	if err := r.db.Create(team).Error; err != nil {
+		return err
+	}
+	
+	// 然后单独创建每个成员，使用原生 SQL 确保 JoinedAt 被正确设置
+	for i := range members {
+		members[i].TeamID = team.ID
+		// 使用原生 SQL 插入，确保 joined_at 使用 NOW()
+		err := r.db.Exec(`
+			INSERT INTO team_members (team_id, user_id, address, name, email, skills, role, joined_at, created_at, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())
+		`, members[i].TeamID, members[i].UserID, members[i].Address, members[i].Name, 
+			members[i].Email, members[i].Skills, members[i].Role).Error
+		if err != nil {
+			return err
+		}
+	}
+	
+	// 重新加载团队以包含成员
+	return r.db.Preload("Members").First(team, team.ID).Error
 }
 
 func (r *teamRepository) GetByID(id uint) (*models.Team, error) {

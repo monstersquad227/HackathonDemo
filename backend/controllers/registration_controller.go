@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"errors"
 	"hackathon-platform/backend/repositories"
 	"hackathon-platform/backend/services"
@@ -25,10 +26,55 @@ func NewRegistrationController(db *gorm.DB) *RegistrationController {
 
 // CreateRegistration creates a new registration
 func (c *RegistrationController) CreateRegistration(ctx *gin.Context) {
-	var req services.CreateRegistrationRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+	// Manually decode JSON to handle optional fields properly
+	var rawData map[string]interface{}
+	if err := json.NewDecoder(ctx.Request.Body).Decode(&rawData); err != nil {
+		ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid JSON: " + err.Error()})
 		return
+	}
+
+	// Build request struct manually
+	var req services.CreateRegistrationRequest
+	
+	// Parse event_id (required)
+	if eventIDVal, ok := rawData["event_id"]; ok {
+		if eventIDFloat, ok := eventIDVal.(float64); ok {
+			req.EventID = uint(eventIDFloat)
+		} else {
+			ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "event_id must be a number"})
+			return
+		}
+	} else {
+		ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "event_id is required"})
+		return
+	}
+
+	// Parse team_id (optional)
+	if teamIDVal, ok := rawData["team_id"]; ok && teamIDVal != nil {
+		if teamIDFloat, ok := teamIDVal.(float64); ok && teamIDFloat > 0 {
+			teamID := uint(teamIDFloat)
+			req.TeamID = &teamID
+		}
+	}
+
+	// Parse wallet_address (optional, but required if team_id is not provided)
+	if walletAddrVal, ok := rawData["wallet_address"]; ok {
+		if walletAddr, ok := walletAddrVal.(string); ok {
+			req.WalletAddress = walletAddr
+		}
+	}
+
+	// Parse optional fields
+	if projectNameVal, ok := rawData["project_name"]; ok {
+		if projectName, ok := projectNameVal.(string); ok {
+			req.ProjectName = projectName
+		}
+	}
+
+	if projectDescVal, ok := rawData["project_description"]; ok {
+		if projectDesc, ok := projectDescVal.(string); ok {
+			req.ProjectDescription = projectDesc
+		}
 	}
 
 	registration, err := c.service.CreateRegistration(&req)

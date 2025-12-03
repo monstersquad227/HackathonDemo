@@ -26,6 +26,7 @@ type Prize struct {
 	Name        string `json:"name" gorm:"not null"` // e.g., "一等奖", "First Place"
 	Description string `json:"description"`
 	Amount      string `json:"amount"` // Prize amount (can be in tokens, ETH, etc.)
+	Count       int    `json:"count" gorm:"default:1"` // Number of prizes for this rank
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

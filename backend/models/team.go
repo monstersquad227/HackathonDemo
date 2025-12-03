@@ -44,12 +44,21 @@ type TeamMember struct {
 	Email     string    `json:"email"`
 	Skills    string    `json:"skills" gorm:"type:text"` // Comma-separated skills
 	Role      string    `json:"role"` // e.g., "Developer", "Designer", "PM"
-	JoinedAt  time.Time `json:"joined_at"`
+	JoinedAt  *time.Time `json:"joined_at"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	
 	// Relations
 	Team Team `json:"team" gorm:"foreignKey:TeamID"`
+}
+
+// BeforeCreate hook to set JoinedAt if not set
+func (tm *TeamMember) BeforeCreate(tx *gorm.DB) error {
+	if tm.JoinedAt == nil {
+		now := time.Now()
+		tm.JoinedAt = &now
+	}
+	return nil
 }
 
 // RegistrationStatus represents the status of a registration
@@ -66,7 +75,8 @@ const (
 type Registration struct {
 	ID              uint              `json:"id" gorm:"primaryKey"`
 	EventID         uint              `json:"event_id" gorm:"not null;index"`
-	TeamID          uint              `json:"team_id" gorm:"not null;index"`
+	TeamID          *uint             `json:"team_id" gorm:"index"` // Optional: can be null for individual registration
+	WalletAddress   string            `json:"wallet_address" gorm:"type:varchar(255);index"` // Wallet address for individual registration
 	Status          RegistrationStatus `json:"status" gorm:"type:varchar(20);default:'pending'"`
 	ProjectName     string            `json:"project_name"` // Optional: project name if known
 	ProjectDescription string         `json:"project_description" gorm:"type:text"`
@@ -78,7 +88,7 @@ type Registration struct {
 	
 	// Relations
 	Event Event `json:"event" gorm:"foreignKey:EventID"`
-	Team  Team  `json:"team" gorm:"foreignKey:TeamID"`
+	Team  *Team `json:"team" gorm:"foreignKey:TeamID"`
 }
 
 // TableName specifies the table name for Team

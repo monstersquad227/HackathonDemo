@@ -50,6 +50,7 @@ type CreatePrizeRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
 	Amount      string `json:"amount"`
+	Count       int    `json:"count"` // Number of prizes for this rank
 }
 
 type UpdateEventRequest struct {
@@ -100,11 +101,16 @@ func (s *eventService) CreateEvent(req *CreateEventRequest) (*models.Event, erro
 
 	// Create prizes
 	for _, prizeReq := range req.Prizes {
+		count := prizeReq.Count
+		if count <= 0 {
+			count = 1 // Default to 1 if not specified or invalid
+		}
 		prize := models.Prize{
 			Rank:        prizeReq.Rank,
 			Name:        prizeReq.Name,
-			Description: prizeReq.Description,
-			Amount:      prizeReq.Amount,
+			Description: prizeReq.Amount,      // 修复：交换字段，amount值存储到description
+			Amount:      prizeReq.Description, // 修复：交换字段，description值存储到amount
+			Count:       count,
 		}
 		event.Prizes = append(event.Prizes, prize)
 	}
@@ -181,11 +187,16 @@ func (s *eventService) UpdateEvent(id uint, req *UpdateEventRequest) (*models.Ev
 	if req.Prizes != nil {
 		event.Prizes = []models.Prize{}
 		for _, prizeReq := range req.Prizes {
+			count := prizeReq.Count
+			if count <= 0 {
+				count = 1 // Default to 1 if not specified or invalid
+			}
 			prize := models.Prize{
 				Rank:        prizeReq.Rank,
 				Name:        prizeReq.Name,
 				Description: prizeReq.Description,
 				Amount:      prizeReq.Amount,
+				Count:       count,
 			}
 			event.Prizes = append(event.Prizes, prize)
 		}

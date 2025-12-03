@@ -9,7 +9,6 @@ const EventDetail = () => {
   const [event, setEvent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [updatingStage, setUpdatingStage] = useState(false)
 
   useEffect(() => {
     loadEvent()
@@ -28,20 +27,60 @@ const EventDetail = () => {
     }
   }
 
-  const handleStageUpdate = async (newStage) => {
-    if (!window.confirm(`确定要将活动阶段更新为 "${getStageName(newStage)}" 吗？`)) {
-      return
+  // 根据时间自动判断当前阶段
+  const getCurrentStage = (event) => {
+    if (!event) return 'registration'
+    
+    const now = new Date()
+    const startTime = new Date(event.start_time)
+    const endTime = new Date(event.end_time)
+    
+    // 如果活动还未开始
+    if (now < startTime) {
+      return 'registration'
     }
-
-    try {
-      setUpdatingStage(true)
-      const updatedEvent = await eventApi.updateStage(id, newStage)
-      setEvent(updatedEvent)
-    } catch (err) {
-      alert('更新阶段失败: ' + (err.response?.data?.error || err.message))
-    } finally {
-      setUpdatingStage(false)
+    
+    // 如果活动已结束
+    if (now > endTime) {
+      return 'ended'
     }
+    
+    // 根据各阶段时间判断
+    const checkTimeRange = (startTime, endTime) => {
+      if (!startTime || !endTime) return false
+      const start = new Date(startTime)
+      const end = new Date(endTime)
+      return now >= start && now <= end
+    }
+    
+    // 按优先级检查：投票 > 提交 > 签到 > 报名
+    if (checkTimeRange(event.voting_start_time, event.voting_end_time)) {
+      return 'voting'
+    }
+    
+    if (checkTimeRange(event.submission_start_time, event.submission_end_time)) {
+      return 'submission'
+    }
+    
+    if (checkTimeRange(event.checkin_start_time, event.checkin_end_time)) {
+      return 'checkin'
+    }
+    
+    if (checkTimeRange(event.registration_start_time, event.registration_end_time)) {
+      return 'registration'
+    }
+    
+    // 如果不在任何阶段时间内，根据活动时间判断
+    if (now >= startTime && now <= endTime) {
+      // 如果投票时间已过，可能是颁奖阶段
+      if (event.voting_end_time && new Date(event.voting_end_time) < now) {
+        return 'awards'
+      }
+      // 否则默认返回提交阶段
+      return 'submission'
+    }
+    
+    return 'registration'
   }
 
   const getStageName = (stage) => {
@@ -71,17 +110,8 @@ const EventDetail = () => {
   const formatDate = (dateString) => {
     if (!dateString) return '-'
     const date = new Date(dateString)
-    return date.toLocaleString('zh-CN')
+    return date.toLocaleDateString('zh-CN')
   }
-
-  const stages = [
-    { value: 'registration', label: '报名中' },
-    { value: 'checkin', label: '签到' },
-    { value: 'submission', label: '提交作品' },
-    { value: 'voting', label: '投票中' },
-    { value: 'awards', label: '颁奖' },
-    { value: 'ended', label: '已结束' },
-  ]
 
   if (loading) {
     return <div className="loading">加载中...</div>
@@ -105,8 +135,8 @@ const EventDetail = () => {
           ← 返回列表
         </button>
         <h1>{event.name}</h1>
-        <span className={`stage-badge ${getStageBadgeClass(event.current_stage)}`}>
-          {getStageName(event.current_stage)}
+        <span className={`stage-badge ${getStageBadgeClass(getCurrentStage(event))}`}>
+          {getStageName(getCurrentStage(event))}
         </span>
       </div>
 
@@ -199,66 +229,83 @@ const EventDetail = () => {
           <div className="card">
             <h2>奖项配置</h2>
             <div className="prizes-list">
-              {event.prizes.map((prize, index) => (
-                <div key={index} className="prize-card">
-                  <h3>
-                    {prize.name} (第{prize.rank}名)
-                  </h3>
-                  {prize.description && <p>{prize.description}</p>}
-                  {prize.amount && (
-                    <p className="prize-amount">
-                      <strong>奖金:</strong> {prize.amount}
-                    </p>
-                  )}
-                </div>
-              ))}
+              {event.prizes.map((prize, index) => {
+                // 检查必填字段
+                const missingFields = []
+                if (!prize.rank || prize.rank <= 0) {
+                  missingFields.push('排名')
+                }
+                if (!prize.name || prize.name.trim() === '') {
+                  missingFields.push('奖项名称')
+                }
+                if (!prize.count || prize.count <= 0) {
+                  missingFields.push('个数')
+                }
+                if (!prize.amount || prize.amount.trim() === '') {
+                  missingFields.push('奖金金额')
+                }
+
+                return (
+                  <div key={index} className="prize-card">
+                    {missingFields.length > 0 && (
+                      <div style={{ 
+                        padding: '8px', 
+                        marginBottom: '8px', 
+                        backgroundColor: '#fff3cd', 
+                        border: '1px solid #ffc107', 
+                        borderRadius: '4px',
+                        color: '#856404',
+                        fontSize: '0.9em'
+                      }}>
+                        <strong>⚠️ 缺少必填字段:</strong> {missingFields.join('、')}
+                      </div>
+                    )}
+                    <h3>
+                      {prize.name || <span style={{ color: '#dc3545' }}>未设置奖项名称</span>} 
+                      {prize.rank ? ` (第${prize.rank}名)` : <span style={{ color: '#dc3545' }}> (未设置排名)</span>}
+                    </h3>
+                    <div style={{ marginTop: '8px', marginBottom: '8px' }}>
+                      <p style={{ margin: '4px 0' }}>
+                        <strong>个数:</strong>{' '}
+                        {(() => {
+                          // 如果count为0、null或undefined，默认显示为1（因为数据库默认值是1）
+                          const displayCount = (prize.count && prize.count > 0) ? prize.count : 1
+                          return <span>{displayCount}个</span>
+                        })()}
+                      </p>
+                      {prize.description && <p style={{ margin: '4px 0' }}>{prize.description}</p>}
+                      <p className="prize-amount" style={{ margin: '4px 0' }}>
+                        <strong>奖金:</strong>{' '}
+                        {prize.amount ? (
+                          <span>{prize.amount}</span>
+                        ) : (
+                          <span style={{ color: '#dc3545' }}>未设置</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
 
         <div className="card">
-          <h2>阶段管理</h2>
-          <p className="current-stage">
-            当前阶段: <strong>{getStageName(event.current_stage)}</strong>
-          </p>
-          <div className="stage-buttons">
-            {stages.map((stage) => (
-              <button
-                key={stage.value}
-                onClick={() => handleStageUpdate(stage.value)}
-                disabled={
-                  updatingStage || event.current_stage === stage.value
-                }
-                className={`btn ${
-                  event.current_stage === stage.value
-                    ? 'btn-primary'
-                    : 'btn-secondary'
-                }`}
-              >
-                {stage.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="card">
-          <h2>奖金池管理</h2>
-          <Link
-            to={`/events/${event.id}/funding-pool`}
-            className="btn btn-primary"
-          >
-            管理奖金池
-          </Link>
-        </div>
-
-        <div className="card">
           <h2>报名管理</h2>
-          <Link
-            to={`/events/${event.id}/registrations`}
-            className="btn btn-primary"
-          >
-            查看报名
-          </Link>
+          <div className="action-buttons">
+            <Link
+              to={`/events/${event.id}/register`}
+              className="btn btn-secondary"
+            >
+              参与报名
+            </Link>
+            <Link
+              to={`/events/${event.id}/registrations`}
+              className="btn btn-primary"
+            >
+              查看报名
+            </Link>
+          </div>
         </div>
 
         <div className="card">

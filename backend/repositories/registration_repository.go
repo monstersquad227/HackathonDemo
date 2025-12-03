@@ -12,6 +12,7 @@ type RegistrationRepository interface {
 	GetByEventID(eventID uint) ([]models.Registration, error)
 	GetByTeamID(teamID uint) ([]models.Registration, error)
 	GetByEventAndTeam(eventID, teamID uint) (*models.Registration, error)
+	GetByEventAndWallet(eventID uint, walletAddress string) (*models.Registration, error)
 	Update(registration *models.Registration) error
 	Delete(id uint) error
 	GetPendingByEventID(eventID uint) ([]models.Registration, error)
@@ -56,6 +57,16 @@ func (r *registrationRepository) GetByEventAndTeam(eventID, teamID uint) (*model
 	var registration models.Registration
 	err := r.db.Preload("Event").Preload("Team.Members").
 		Where("event_id = ? AND team_id = ?", eventID, teamID).First(&registration).Error
+	if err != nil {
+		return nil, err
+	}
+	return &registration, nil
+}
+
+func (r *registrationRepository) GetByEventAndWallet(eventID uint, walletAddress string) (*models.Registration, error) {
+	var registration models.Registration
+	err := r.db.Preload("Event").
+		Where("event_id = ? AND wallet_address = ?", eventID, walletAddress).First(&registration).Error
 	if err != nil {
 		return nil, err
 	}

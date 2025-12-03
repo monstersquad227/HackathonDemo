@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { registrationApi } from '../api/registrationApi'
-import { teamApi } from '../api/teamApi'
 import './RegistrationManagement.css'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
-import Select from '@mui/material/Select'
-import MenuItem from '@mui/material/MenuItem'
-import FormControl from '@mui/material/FormControl'
-import InputLabel from '@mui/material/InputLabel'
 import Paper from '@mui/material/Paper'
 import Grid from '@mui/material/Grid'
 import Chip from '@mui/material/Chip'
@@ -19,15 +14,8 @@ import Alert from '@mui/material/Alert'
 const RegistrationManagement = () => {
   const { eventId } = useParams()
   const [registrations, setRegistrations] = useState([])
-  const [teams, setTeams] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [formData, setFormData] = useState({
-    team_id: '',
-    project_name: '',
-    project_description: '',
-  })
 
   useEffect(() => {
     loadData()
@@ -36,46 +24,13 @@ const RegistrationManagement = () => {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [registrationsData, teamsData] = await Promise.all([
-        registrationApi.getRegistrationsByEvent(eventId),
-        teamApi.getAllTeams(),
-      ])
+      const registrationsData = await registrationApi.getRegistrationsByEvent(eventId)
       setRegistrations(registrationsData)
-      setTeams(teamsData.filter(team => team.status === 'approved'))
       setError(null)
     } catch (err) {
       setError('加载数据失败: ' + err.message)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    try {
-      await registrationApi.createRegistration({
-        event_id: parseInt(eventId),
-        team_id: parseInt(formData.team_id),
-        project_name: formData.project_name,
-        project_description: formData.project_description,
-      })
-      setShowCreateForm(false)
-      setFormData({
-        team_id: '',
-        project_name: '',
-        project_description: '',
-      })
-      loadData()
-    } catch (err) {
-      alert('创建报名失败: ' + (err.response?.data?.error || err.message))
     }
   }
 
@@ -139,62 +94,6 @@ const RegistrationManagement = () => {
         </Alert>
       )}
 
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">创建报名</Typography>
-          <Button variant="contained" onClick={() => setShowCreateForm(!showCreateForm)}>
-            {showCreateForm ? '取消' : '创建报名'}
-          </Button>
-        </Box>
-
-        {showCreateForm && (
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
-          >
-            <FormControl fullWidth required>
-              <InputLabel id="team-select-label">选择队伍 *</InputLabel>
-              <Select
-                labelId="team-select-label"
-                label="选择队伍 *"
-                name="team_id"
-                value={formData.team_id}
-                onChange={handleChange}
-              >
-                {teams.map((team) => (
-                  <MenuItem key={team.id} value={team.id}>
-                    {team.name} ({team.members?.length || 0} 成员)
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <TextField
-              label="项目名称"
-              name="project_name"
-              value={formData.project_name}
-              onChange={handleChange}
-              fullWidth
-            />
-            <TextField
-              label="项目描述"
-              name="project_description"
-              value={formData.project_description}
-              onChange={handleChange}
-              multiline
-              rows={3}
-              fullWidth
-            />
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button type="submit" variant="contained">
-                提交报名
-              </Button>
-            </Box>
-          </Box>
-        )}
-      </Paper>
-
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
           报名列表 ({registrations.length})
@@ -219,7 +118,7 @@ const RegistrationManagement = () => {
                     }}
                   >
                     <Typography variant="subtitle1" noWrap>
-                      {registration.team?.name || '未知队伍'}
+                      {registration.team?.name || registration.wallet_address || '未知'}
                     </Typography>
                     <Chip
                       label={getStatusName(registration.status)}
@@ -247,9 +146,16 @@ const RegistrationManagement = () => {
                         <strong>项目描述:</strong> {registration.project_description}
                       </Typography>
                     )}
-                    <Typography variant="body2">
-                      <strong>队伍成员:</strong> {registration.team?.members?.length || 0} 人
-                    </Typography>
+                    {registration.team && (
+                      <Typography variant="body2">
+                        <strong>队伍成员:</strong> {registration.team?.members?.length || 0} 人
+                      </Typography>
+                    )}
+                    {registration.wallet_address && (
+                      <Typography variant="body2">
+                        <strong>钱包地址:</strong> {registration.wallet_address}
+                      </Typography>
+                    )}
                     {registration.sbt_token_id && (
                       <Typography variant="body2">
                         <strong>SBT Token ID:</strong> {registration.sbt_token_id}

@@ -7,6 +7,7 @@ import SponsorManagement from './components/SponsorManagement'
 import FundingPoolManagement from './components/FundingPoolManagement'
 import TeamManagement from './components/TeamManagement'
 import RegistrationManagement from './components/RegistrationManagement'
+import Registration from './components/Registration'
 import CheckInManagement from './components/CheckInManagement'
 import CheckIn from './components/CheckIn'
 import SubmissionList from './components/SubmissionList'
@@ -62,6 +63,7 @@ function App() {
             <Route path="/events/create" element={<EventCreate />} />
             <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/events/:eventId/funding-pool" element={<FundingPoolManagement />} />
+            <Route path="/events/:eventId/register" element={<Registration />} />
             <Route path="/events/:eventId/registrations" element={<RegistrationManagement />} />
             <Route path="/events/:eventId/check-in" element={<CheckInManagement />} />
             <Route path="/events/:eventId/checkin" element={<CheckIn />} />

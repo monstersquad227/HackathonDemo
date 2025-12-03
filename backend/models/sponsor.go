@@ -76,8 +76,9 @@ type FundingPool struct {
 	DeletedAt       gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 
 	// Relations
-	Event        Event         `json:"event" gorm:"foreignKey:EventID"`
-	Sponsorships []Sponsorship `json:"sponsorships" gorm:"foreignKey:EventID"`
+	Event Event `json:"event" gorm:"foreignKey:EventID"`
+	// Note: Sponsorships relationship is defined in Sponsorship model, not here
+	// to avoid circular foreign key constraints
 }
 
 // PrizeDistribution represents prize distribution configuration

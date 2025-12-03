@@ -22,10 +22,6 @@ func NewEventController(db *gorm.DB) *EventController {
 	return &EventController{service: service}
 }
 
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
-
 // CreateEvent creates a new hackathon event
 // @Summary Create a new event
 // @Description Create a new hackathon event with all required information
@@ -76,14 +72,14 @@ func (c *EventController) ListEvents(ctx *gin.Context) {
 // @Description Get detailed information about a specific event
 // @Tags events
 // @Produce json
-// @Param id path int true "Event ID"
+// @Param eventId path int true "Event ID"
 // @Success 200 {object} models.Event
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /api/v1/events/{id} [get]
+// @Router /api/v1/events/{eventId} [get]
 func (c *EventController) GetEvent(ctx *gin.Context) {
-	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(ctx.Param("eventId"), 10, 32)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid event ID"})
 		return
@@ -108,15 +104,15 @@ func (c *EventController) GetEvent(ctx *gin.Context) {
 // @Tags events
 // @Accept json
 // @Produce json
-// @Param id path int true "Event ID"
+// @Param eventId path int true "Event ID"
 // @Param event body services.UpdateEventRequest true "Updated event data"
 // @Success 200 {object} models.Event
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /api/v1/events/{id} [put]
+// @Router /api/v1/events/{eventId} [put]
 func (c *EventController) UpdateEvent(ctx *gin.Context) {
-	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(ctx.Param("eventId"), 10, 32)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid event ID"})
 		return
@@ -146,14 +142,14 @@ func (c *EventController) UpdateEvent(ctx *gin.Context) {
 // @Description Delete an event by ID
 // @Tags events
 // @Produce json
-// @Param id path int true "Event ID"
+// @Param eventId path int true "Event ID"
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /api/v1/events/{id} [delete]
+// @Router /api/v1/events/{eventId} [delete]
 func (c *EventController) DeleteEvent(ctx *gin.Context) {
-	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(ctx.Param("eventId"), 10, 32)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid event ID"})
 		return
@@ -178,15 +174,15 @@ func (c *EventController) DeleteEvent(ctx *gin.Context) {
 // @Tags events
 // @Accept json
 // @Produce json
-// @Param id path int true "Event ID"
+// @Param eventId path int true "Event ID"
 // @Param stage body object{stage=string} true "New stage"
 // @Success 200 {object} models.Event
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /api/v1/events/{id}/stage [patch]
+// @Router /api/v1/events/{eventId}/stage [patch]
 func (c *EventController) UpdateStage(ctx *gin.Context) {
-	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(ctx.Param("eventId"), 10, 32)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid event ID"})
 		return

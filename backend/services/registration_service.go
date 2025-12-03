@@ -36,10 +36,11 @@ func NewRegistrationService(
 }
 
 type CreateRegistrationRequest struct {
-	EventID            uint   `json:"event_id" binding:"required"`
-	TeamID             uint   `json:"team_id" binding:"required"`
-	ProjectName        string `json:"project_name"`
-	ProjectDescription string `json:"project_description"`
+	EventID            uint   `json:"event_id"` // Required, validated in controller
+	TeamID             *uint  `json:"team_id,omitempty"` // Optional: for team registration
+	WalletAddress      string `json:"wallet_address,omitempty"` // Required if TeamID is not provided, validated in service
+	ProjectName        string `json:"project_name,omitempty"`
+	ProjectDescription string `json:"project_description,omitempty"`
 }
 
 func (s *registrationService) CreateRegistration(req *CreateRegistrationRequest) (*models.Registration, error) {
@@ -54,29 +55,55 @@ func (s *registrationService) CreateRegistration(req *CreateRegistrationRequest)
 		return nil, errors.New("event is not in registration stage")
 	}
 
-	// Validate team exists
-	team, err := s.teamRepo.GetByID(req.TeamID)
-	if err != nil {
-		return nil, errors.New("team not found")
+	// Validate that either TeamID or WalletAddress is provided
+	if req.TeamID == nil && req.WalletAddress == "" {
+		return nil, errors.New("either team_id or wallet_address must be provided")
 	}
 
-	// Check if team is approved
-	if team.Status != models.TeamStatusApproved {
-		return nil, errors.New("team must be approved before registration")
-	}
+	var registration *models.Registration
 
-	// Check if already registered
-	existing, _ := s.registrationRepo.GetByEventAndTeam(req.EventID, req.TeamID)
-	if existing != nil {
-		return nil, errors.New("team already registered for this event")
-	}
+	// Handle team registration
+	if req.TeamID != nil {
+		// Validate team exists
+		team, err := s.teamRepo.GetByID(*req.TeamID)
+		if err != nil {
+			return nil, errors.New("team not found")
+		}
 
-	registration := &models.Registration{
-		EventID:            req.EventID,
-		TeamID:             req.TeamID,
-		Status:             models.RegistrationStatusPending,
-		ProjectName:        req.ProjectName,
-		ProjectDescription: req.ProjectDescription,
+		// Check if team is approved
+		if team.Status != models.TeamStatusApproved {
+			return nil, errors.New("team must be approved before registration")
+		}
+
+		// Check if already registered
+		existing, _ := s.registrationRepo.GetByEventAndTeam(req.EventID, *req.TeamID)
+		if existing != nil {
+			return nil, errors.New("team already registered for this event")
+		}
+
+		registration = &models.Registration{
+			EventID:            req.EventID,
+			TeamID:             req.TeamID,
+			Status:             models.RegistrationStatusPending,
+			ProjectName:        req.ProjectName,
+			ProjectDescription: req.ProjectDescription,
+		}
+	} else {
+		// Handle individual registration by wallet address
+		// Check if wallet address already registered for this event
+		existing, _ := s.registrationRepo.GetByEventAndWallet(req.EventID, req.WalletAddress)
+		if existing != nil {
+			return nil, errors.New("wallet address already registered for this event")
+		}
+
+		registration = &models.Registration{
+			EventID:            req.EventID,
+			TeamID:             nil,
+			WalletAddress:      req.WalletAddress,
+			Status:             models.RegistrationStatusPending,
+			ProjectName:        req.ProjectName,
+			ProjectDescription: req.ProjectDescription,
+		}
 	}
 
 	err = s.registrationRepo.Create(registration)

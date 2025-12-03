@@ -4,6 +4,7 @@ import (
 	"errors"
 	"hackathon-platform/backend/models"
 	"hackathon-platform/backend/repositories"
+	"time"
 )
 
 type TeamService interface {
@@ -83,12 +84,14 @@ func (s *teamService) CreateTeam(req *CreateTeamRequest) (*models.Team, error) {
 
 	// Add members
 	for _, memberReq := range req.Members {
+		now := time.Now()
 		member := models.TeamMember{
-			Address: memberReq.Address,
-			Name:    memberReq.Name,
-			Email:   memberReq.Email,
-			Skills:  memberReq.Skills,
-			Role:    memberReq.Role,
+			Address:  memberReq.Address,
+			Name:     memberReq.Name,
+			Email:    memberReq.Email,
+			Skills:   memberReq.Skills,
+			Role:     memberReq.Role,
+			JoinedAt: &now, // Set joined time to current time
 		}
 		team.Members = append(team.Members, member)
 	}
@@ -170,13 +173,15 @@ func (s *teamService) AddMember(teamID uint, req *AddMemberRequest) (*models.Tea
 		}
 	}
 
+	now := time.Now()
 	member := models.TeamMember{
-		TeamID:  teamID,
-		Address: req.Address,
-		Name:    req.Name,
-		Email:   req.Email,
-		Skills:  req.Skills,
-		Role:    req.Role,
+		TeamID:   teamID,
+		Address:  req.Address,
+		Name:     req.Name,
+		Email:    req.Email,
+		Skills:   req.Skills,
+		Role:     req.Role,
+		JoinedAt: &now, // Set joined time to current time
 	}
 	team.Members = append(team.Members, member)
 
@@ -222,8 +227,13 @@ func (s *teamService) ApproveTeam(id uint, organizerAddress string) (*models.Tea
 		return nil, err
 	}
 
-	// Note: In a real implementation, you would verify organizerAddress against event organizer
-	// For now, we'll just approve the team
+	// Verify that the organizerAddress is a valid organizer (has created at least one event)
+	// This is a simplified check - in production, you might want more strict validation
+	events, err := s.eventRepo.GetByOrganizer(organizerAddress)
+	if err != nil || len(events) == 0 {
+		return nil, errors.New("invalid organizer address or organizer has no events")
+	}
+
 	team.Status = models.TeamStatusApproved
 	err = s.teamRepo.Update(team)
 	if err != nil {
@@ -239,7 +249,12 @@ func (s *teamService) RejectTeam(id uint, organizerAddress string) (*models.Team
 		return nil, err
 	}
 
-	// Note: In a real implementation, you would verify organizerAddress against event organizer
+	// Verify that the organizerAddress is a valid organizer (has created at least one event)
+	events, err := s.eventRepo.GetByOrganizer(organizerAddress)
+	if err != nil || len(events) == 0 {
+		return nil, errors.New("invalid organizer address or organizer has no events")
+	}
+
 	team.Status = models.TeamStatusRejected
 	err = s.teamRepo.Update(team)
 	if err != nil {
