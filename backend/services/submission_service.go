@@ -48,7 +48,7 @@ type SubmissionFileRequest struct {
 
 type CreateSubmissionRequest struct {
 	EventID       uint                    `json:"event_id" binding:"required"`
-	TeamID        uint                    `json:"team_id" binding:"required"`
+	TeamID        *uint                   `json:"team_id"` // 可选，如果不提供则通过SubmittedBy自动查找
 	Title         string                  `json:"title" binding:"required"`
 	Description   string                  `json:"description"`
 	GithubRepo    string                  `json:"github_repo"`
@@ -67,6 +67,7 @@ type UpdateSubmissionRequest struct {
 	Documentation *string                 `json:"documentation"`
 	StorageURL    *string                 `json:"storage_url"`
 	Files         []SubmissionFileRequest `json:"files"`
+	SubmittedBy   *string                 `json:"submitted_by"` // 队长钱包地址，用于验证
 }
 
 func (s *submissionService) CreateSubmission(req *CreateSubmissionRequest) (*models.Submission, error) {
@@ -81,20 +82,32 @@ func (s *submissionService) CreateSubmission(req *CreateSubmissionRequest) (*mod
 		return nil, errors.New("event is not in submission stage")
 	}
 
-	// Validate team exists
-	if _, err := s.teamRepo.GetByID(req.TeamID); err != nil {
-		return nil, errors.New("team not found")
+	// Determine team ID: if not provided, find by leader address and event
+	var teamID uint
+	if req.TeamID != nil && *req.TeamID > 0 {
+		// Validate team exists
+		if _, err := s.teamRepo.GetByID(*req.TeamID); err != nil {
+			return nil, errors.New("team not found")
+		}
+		teamID = *req.TeamID
+	} else {
+		// Find team by leader address and event
+		team, err := s.teamRepo.GetByLeaderAndEvent(req.SubmittedBy, req.EventID)
+		if err != nil {
+			return nil, errors.New("team not found for this leader address in this event")
+		}
+		teamID = team.ID
 	}
 
 	// Ensure submissions are unique per team/event
-	existing, _ := s.submissionRepo.GetByTeamAndEvent(req.TeamID, req.EventID)
+	existing, _ := s.submissionRepo.GetByTeamAndEvent(teamID, req.EventID)
 	if existing != nil {
 		return nil, errors.New("team already submitted for this event")
 	}
 
 	submission := &models.Submission{
 		EventID:       req.EventID,
-		TeamID:        req.TeamID,
+		TeamID:        teamID,
 		Title:         req.Title,
 		Description:   req.Description,
 		GithubRepo:    req.GithubRepo,
@@ -109,7 +122,7 @@ func (s *submissionService) CreateSubmission(req *CreateSubmissionRequest) (*mod
 	// Generate submission hash fingerprint (based on fields)
 	hashInput := fmt.Sprintf("%d|%d|%s|%s|%s|%s|%s|%s",
 		req.EventID,
-		req.TeamID,
+		teamID,
 		req.Title,
 		req.Description,
 		req.GithubRepo,
@@ -155,9 +168,17 @@ func (s *submissionService) UpdateSubmission(id uint, req *UpdateSubmissionReque
 		return nil, err
 	}
 
-	if submission.Status != models.SubmissionStatusPending {
-		return nil, errors.New("only pending submissions can be updated")
+	// 验证是否是队长在修改（如果提供了submitted_by）
+	if req.SubmittedBy != nil {
+		normalizedReq := normalizeAddress(*req.SubmittedBy)
+		normalizedSubmitted := normalizeAddress(submission.SubmittedBy)
+		if normalizedReq != normalizedSubmitted {
+			return nil, errors.New("only the team leader who submitted can update this submission")
+		}
 	}
+
+	// 允许队长实时修改，不再限制状态
+	// 移除状态检查，允许任何状态的提交都可以被队长修改
 
 	if req.Title != nil {
 		submission.Title = *req.Title

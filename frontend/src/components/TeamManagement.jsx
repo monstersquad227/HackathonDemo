@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { teamApi } from '../api/teamApi'
 import './TeamManagement.css'
 import Box from '@mui/material/Box'
@@ -9,13 +10,20 @@ import Grid from '@mui/material/Grid'
 import Paper from '@mui/material/Paper'
 import Chip from '@mui/material/Chip'
 import Alert from '@mui/material/Alert'
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogActions from '@mui/material/DialogActions'
 
 const TeamManagement = () => {
+  const { eventId } = useParams()
+  const navigate = useNavigate()
   const [teams, setTeams] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [formData, setFormData] = useState({
+    event_id: eventId ? parseInt(eventId) : '',
     name: '',
     description: '',
     leader_address: '',
@@ -23,26 +31,29 @@ const TeamManagement = () => {
     skills: '',
     members: [],
   })
-  const [newMember, setNewMember] = useState({
-    address: '',
-    name: '',
-    email: '',
-    skills: '',
-    role: '',
-  })
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false)
+  const [selectedTeam, setSelectedTeam] = useState(null)
+  const [joinMemberAddress, setJoinMemberAddress] = useState('')
 
   useEffect(() => {
     loadTeams()
-  }, [])
+  }, [eventId])
 
   const loadTeams = async () => {
     try {
       setLoading(true)
-      const data = await teamApi.getAllTeams()
-      setTeams(data)
+      let data
+      if (eventId) {
+        data = await teamApi.getTeamsByEvent(eventId)
+      } else {
+        data = await teamApi.getAllTeams()
+      }
+      // Ensure data is an array
+      setTeams(Array.isArray(data) ? data : [])
       setError(null)
     } catch (err) {
-      setError('加载队伍列表失败: ' + err.message)
+      setError('加载队伍列表失败: ' + (err.response?.data?.error || err.message))
+      setTeams([]) // Set empty array on error
     } finally {
       setLoading(false)
     }
@@ -52,49 +63,26 @@ const TeamManagement = () => {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: name === 'max_members' || name === 'event_id' ? parseInt(value) || 0 : value,
     }))
   }
 
-  const handleMemberChange = (e) => {
-    const { name, value } = e.target
-    setNewMember((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-  }
-
-  const addMemberToForm = () => {
-    if (!newMember.address) {
-      alert('请输入成员钱包地址')
-      return
-    }
-    setFormData((prev) => ({
-      ...prev,
-      members: [...prev.members, { ...newMember }],
-    }))
-    setNewMember({
-      address: '',
-      name: '',
-      email: '',
-      skills: '',
-      role: '',
-    })
-  }
-
-  const removeMemberFromForm = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      members: prev.members.filter((_, i) => i !== index),
-    }))
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!formData.name || !formData.description || !formData.leader_address || !formData.max_members) {
+      alert('请填写所有必填字段：队伍名称、队伍描述、队长钱包地址、最大成员数')
+      return
+    }
+    if (!formData.event_id) {
+      alert('请选择活动')
+      return
+    }
     try {
       await teamApi.createTeam(formData)
       setShowCreateForm(false)
       setFormData({
+        event_id: eventId ? parseInt(eventId) : '',
         name: '',
         description: '',
         leader_address: '',
@@ -103,8 +91,37 @@ const TeamManagement = () => {
         members: [],
       })
       loadTeams()
+      alert('创建队伍成功')
     } catch (err) {
       alert('创建队伍失败: ' + (err.response?.data?.error || err.message))
+    }
+  }
+
+  const handleJoinTeam = (team) => {
+    // Check if team is full
+    if (team.members && team.members.length >= team.max_members) {
+      alert('队伍已满，无法加入')
+      return
+    }
+    setSelectedTeam(team)
+    setJoinMemberAddress('')
+    setJoinDialogOpen(true)
+  }
+
+  const handleJoinSubmit = async () => {
+    if (!joinMemberAddress) {
+      alert('请输入钱包地址')
+      return
+    }
+    try {
+      await teamApi.addMember(selectedTeam.id, { address: joinMemberAddress })
+      setJoinDialogOpen(false)
+      setSelectedTeam(null)
+      setJoinMemberAddress('')
+      loadTeams()
+      alert('加入队伍成功')
+    } catch (err) {
+      alert('加入队伍失败: ' + (err.response?.data?.error || err.message))
     }
   }
 
@@ -130,11 +147,20 @@ const TeamManagement = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1" fontWeight={600}>
-          队伍管理
+          {eventId ? '活动队伍管理' : '队伍管理'}
         </Typography>
-        <Button variant="contained" onClick={() => setShowCreateForm(!showCreateForm)}>
-          {showCreateForm ? '取消' : '创建队伍'}
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {eventId && (
+            <Button variant="outlined" onClick={() => navigate(`/events/${eventId}`)}>
+              返回活动详情
+            </Button>
+          )}
+          {eventId && (
+            <Button variant="contained" onClick={() => setShowCreateForm(!showCreateForm)}>
+              {showCreateForm ? '取消' : '创建队伍'}
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {error && (
@@ -143,160 +169,68 @@ const TeamManagement = () => {
         </Alert>
       )}
 
-      {showCreateForm && (
+      {showCreateForm && eventId && (
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h6" gutterBottom>
             创建队伍
           </Typography>
           <Box component="form" onSubmit={handleSubmit}>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <TextField
-                    label="队伍名称 *"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    fullWidth
-                  />
-                  <TextField
-                    label="队伍描述"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    multiline
-                    rows={3}
-                    fullWidth
-                  />
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={8}>
-                      <TextField
-                        label="队长钱包地址 *"
-                        name="leader_address"
-                        value={formData.leader_address}
-                        onChange={handleChange}
-                        placeholder="0x..."
-                        required
-                        fullWidth
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <TextField
-                        label="最大成员数"
-                        type="number"
-                        name="max_members"
-                        value={formData.max_members}
-                        onChange={handleChange}
-                        inputProps={{ min: 1, max: 20 }}
-                        fullWidth
-                      />
-                    </Grid>
-                  </Grid>
-                  <TextField
-                    label="队伍技能（逗号分隔）"
-                    name="skills"
-                    value={formData.skills}
-                    onChange={handleChange}
-                    placeholder="例如: React, Solidity, UI/UX"
-                    fullWidth
-                  />
-                </Box>
+              <Grid item xs={12}>
+                <TextField
+                  label="队伍名称 *"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                />
               </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle1" gutterBottom>
-                  添加成员
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <TextField
-                      label="钱包地址 *"
-                      name="address"
-                      value={newMember.address}
-                      onChange={handleMemberChange}
-                      placeholder="0x..."
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="姓名"
-                      name="name"
-                      value={newMember.name}
-                      onChange={handleMemberChange}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="邮箱"
-                      name="email"
-                      value={newMember.email}
-                      onChange={handleMemberChange}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="角色"
-                      name="role"
-                      value={newMember.role}
-                      onChange={handleMemberChange}
-                      placeholder="例如: Developer"
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="技能"
-                      name="skills"
-                      value={newMember.skills}
-                      onChange={handleMemberChange}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button type="button" variant="outlined" onClick={addMemberToForm}>
-                      添加成员
-                    </Button>
-                  </Grid>
-                </Grid>
-
-                {formData.members.length > 0 && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      已添加成员 ({formData.members.length})
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      {formData.members.map((member, index) => (
-                        <Paper
-                          key={index}
-                          variant="outlined"
-                          sx={{
-                            p: 1,
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <Typography variant="body2">
-                            {member.address?.slice(0, 10)}... - {member.name || '未命名'}
-                          </Typography>
-                          <Button
-                            size="small"
-                            color="error"
-                            onClick={() => removeMemberFromForm(index)}
-                          >
-                            删除
-                          </Button>
-                        </Paper>
-                      ))}
-                    </Box>
-                  </Box>
-                )}
+              <Grid item xs={12}>
+                <TextField
+                  label="队伍描述 *"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  multiline
+                  rows={3}
+                  required
+                  fullWidth
+                />
               </Grid>
-
+              <Grid item xs={12} sm={8}>
+                <TextField
+                  label="队长钱包地址 *"
+                  name="leader_address"
+                  value={formData.leader_address}
+                  onChange={handleChange}
+                  placeholder="0x..."
+                  required
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="最大成员数 *"
+                  type="number"
+                  name="max_members"
+                  value={formData.max_members}
+                  onChange={handleChange}
+                  inputProps={{ min: 1, max: 20 }}
+                  required
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="队伍技能（逗号分隔）"
+                  name="skills"
+                  value={formData.skills}
+                  onChange={handleChange}
+                  placeholder="例如: React, Solidity, UI/UX"
+                  fullWidth
+                />
+              </Grid>
               <Grid item xs={12}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
                   <Button type="submit" variant="contained">
@@ -313,16 +247,41 @@ const TeamManagement = () => {
       )}
 
       {loading ? (
-        <Typography>加载中...</Typography>
-      ) : teams.length === 0 ? (
+        <Box sx={{ py: 4, textAlign: 'center' }}>
+          <Typography>加载中...</Typography>
+        </Box>
+      ) : !teams || teams.length === 0 ? (
         <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
-          <Typography>暂无队伍</Typography>
+          <Typography variant="h6" gutterBottom>暂无队伍</Typography>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            {eventId ? '该活动还没有队伍，您可以创建第一个队伍' : '还没有队伍'}
+          </Typography>
+          {eventId && (
+            <Button
+              variant="contained"
+              sx={{ mt: 2 }}
+              onClick={() => setShowCreateForm(true)}
+            >
+              创建第一个队伍
+            </Button>
+          )}
         </Box>
       ) : (
         <Grid container spacing={2}>
           {teams.map((team) => (
             <Grid item xs={12} md={6} key={team.id}>
-              <Paper sx={{ p: 2 }}>
+              <Paper
+                sx={{
+                  p: 2,
+                  cursor: eventId && team.status === 'approved' && (!team.members || team.members.length < team.max_members) ? 'pointer' : 'default',
+                  '&:hover': eventId && team.status === 'approved' && (!team.members || team.members.length < team.max_members) ? { boxShadow: 4 } : {},
+                }}
+                onClick={() => {
+                  if (eventId && team.status === 'approved' && (!team.members || team.members.length < team.max_members)) {
+                    handleJoinTeam(team)
+                  }
+                }}
+              >
                 <Box
                   sx={{
                     display: 'flex',
@@ -383,14 +342,60 @@ const TeamManagement = () => {
                     </Box>
                   </Box>
                 )}
+                {eventId && team.status === 'approved' && (
+                  <Box sx={{ mt: 2 }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleJoinTeam(team)
+                      }}
+                      disabled={team.members?.length >= team.max_members}
+                    >
+                      {team.members?.length >= team.max_members ? '队伍已满' : '加入队伍'}
+                    </Button>
+                  </Box>
+                )}
               </Paper>
             </Grid>
           ))}
         </Grid>
       )}
+
+      <Dialog open={joinDialogOpen} onClose={() => setJoinDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>加入队伍</DialogTitle>
+        <DialogContent>
+          {selectedTeam && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                队伍: {selectedTeam.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                成员数: {selectedTeam.members?.length || 0} / {selectedTeam.max_members}
+              </Typography>
+            </Box>
+          )}
+          <TextField
+            label="钱包地址 *"
+            value={joinMemberAddress}
+            onChange={(e) => setJoinMemberAddress(e.target.value)}
+            placeholder="0x..."
+            required
+            fullWidth
+            autoFocus
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setJoinDialogOpen(false)}>取消</Button>
+          <Button onClick={handleJoinSubmit} variant="contained">
+            加入
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
 
 export default TeamManagement
-

@@ -305,6 +305,12 @@ const EventDetail = () => {
             >
               查看报名
             </Link>
+            <Link
+              to={`/events/${event.id}/registration-query`}
+              className="btn btn-secondary"
+            >
+              报名查询
+            </Link>
           </div>
         </div>
 
@@ -324,6 +330,16 @@ const EventDetail = () => {
               用户签到
             </Link>
           </div>
+        </div>
+
+        <div className="card">
+          <h2>队伍管理</h2>
+          <p className="hint">
+            创建和管理队伍，队长可以创建队伍，队员可以加入队伍。
+          </p>
+          <Link to={`/events/${event.id}/teams`} className="btn btn-primary">
+            管理队伍
+          </Link>
         </div>
 
         <div className="card">
@@ -350,17 +366,7 @@ const EventDetail = () => {
             查看根据线上投票自动计算的排行榜，并结合奖项配置了解各名次对应的奖励。
           </p>
           <Link to={`/events/${event.id}/results`} className="btn btn-primary">
-            打开结果页
-          </Link>
-        </div>
-
-        <div className="card">
-          <h2>投票面板</h2>
-          <p className="hint">
-            进入投票管理界面，实时查看榜单、手动投票、维护评委白名单。
-          </p>
-          <Link to={`/events/${event.id}/voting`} className="btn btn-primary">
-            打开投票面板
+            查看结果
           </Link>
         </div>
       </div>

@@ -34,6 +34,12 @@ export const teamApi = {
     return response.data
   },
 
+  // Get teams by event ID
+  getTeamsByEvent: async (eventId) => {
+    const response = await api.get(`/teams/event/${eventId}`)
+    return response.data
+  },
+
   // Create new team
   createTeam: async (teamData) => {
     const response = await api.post('/teams', teamData)

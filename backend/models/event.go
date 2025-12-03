@@ -49,6 +49,7 @@ type Event struct {
 	VotingEndTime         *time.Time `json:"voting_end_time"`
 	CurrentStage          EventStage `json:"current_stage" gorm:"type:varchar(50);default:'registration'"`
 	OrganizerAddress      string     `json:"organizer_address" gorm:"type:varchar(255);not null"` // Wallet address of organizer
+	MaxParticipants        int        `json:"max_participants" gorm:"not null"` // Maximum number of participants
 	AllowSponsorVoting    bool       `json:"allow_sponsor_voting" gorm:"default:false"`
 	AllowPublicVoting     bool       `json:"allow_public_voting" gorm:"default:false"`
 	ContractAddress       string     `json:"contract_address" gorm:"type:varchar(255)"` // On-chain contract address

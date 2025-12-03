@@ -16,6 +16,7 @@ type RegistrationRepository interface {
 	Update(registration *models.Registration) error
 	Delete(id uint) error
 	GetPendingByEventID(eventID uint) ([]models.Registration, error)
+	CountApprovedByEventID(eventID uint) (int64, error)
 }
 
 type registrationRepository struct {
@@ -86,5 +87,13 @@ func (r *registrationRepository) GetPendingByEventID(eventID uint) ([]models.Reg
 	err := r.db.Preload("Team.Members").Preload("Event").
 		Where("event_id = ? AND status = ?", eventID, "pending").Find(&registrations).Error
 	return registrations, err
+}
+
+func (r *registrationRepository) CountApprovedByEventID(eventID uint) (int64, error) {
+	var count int64
+	err := r.db.Model(&models.Registration{}).
+		Where("event_id = ? AND status = ?", eventID, models.RegistrationStatusApproved).
+		Count(&count).Error
+	return count, err
 }
 

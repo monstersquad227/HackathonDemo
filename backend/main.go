@@ -101,9 +101,11 @@ func main() {
 		{
 			teams.POST("", teamController.CreateTeam)
 			teams.GET("", teamController.ListTeams)
-			teams.GET("/:id", teamController.GetTeam)
+			// More specific routes should come before parameterized routes
+			teams.GET("/event/:eventId", teamController.GetTeamsByEvent)
 			teams.GET("/leader/:address", teamController.GetTeamsByLeader)
 			teams.GET("/member/:address", teamController.GetTeamsByMember)
+			teams.GET("/:id", teamController.GetTeam)
 			teams.PUT("/:id", teamController.UpdateTeam)
 			teams.POST("/:id/members", teamController.AddMember)
 			teams.DELETE("/:id/members/:memberId", teamController.RemoveMember)

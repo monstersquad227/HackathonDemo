@@ -39,6 +39,7 @@ type CreateEventRequest struct {
 	VotingStartTime       *time.Time             `json:"voting_start_time"`
 	VotingEndTime         *time.Time             `json:"voting_end_time"`
 	OrganizerAddress      string                 `json:"organizer_address" binding:"required"`
+	MaxParticipants        int                    `json:"max_participants" binding:"required"`
 	AllowSponsorVoting    bool                   `json:"allow_sponsor_voting"`
 	AllowPublicVoting     bool                   `json:"allow_public_voting"`
 	OnChain               bool                   `json:"on_chain"`
@@ -94,6 +95,7 @@ func (s *eventService) CreateEvent(req *CreateEventRequest) (*models.Event, erro
 		VotingEndTime:         req.VotingEndTime,
 		CurrentStage:          models.StageRegistration,
 		OrganizerAddress:      req.OrganizerAddress,
+		MaxParticipants:       req.MaxParticipants,
 		AllowSponsorVoting:    req.AllowSponsorVoting,
 		AllowPublicVoting:     req.AllowPublicVoting,
 		OnChain:               req.OnChain,
@@ -108,8 +110,8 @@ func (s *eventService) CreateEvent(req *CreateEventRequest) (*models.Event, erro
 		prize := models.Prize{
 			Rank:        prizeReq.Rank,
 			Name:        prizeReq.Name,
-			Description: prizeReq.Amount,      // 修复：交换字段，amount值存储到description
-			Amount:      prizeReq.Description, // 修复：交换字段，description值存储到amount
+			Description: prizeReq.Description,
+			Amount:      prizeReq.Amount,
 			Count:       count,
 		}
 		event.Prizes = append(event.Prizes, prize)

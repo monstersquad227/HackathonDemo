@@ -35,6 +35,7 @@ const EventCreate = () => {
     voting_start_time: '',
     voting_end_time: '',
     organizer_address: '',
+    max_participants: '',
     allow_sponsor_voting: false,
     allow_public_voting: false,
     on_chain: false,
@@ -187,6 +188,13 @@ const EventCreate = () => {
       return
     }
 
+    // 验证报名人数
+    if (!formData.max_participants || parseInt(formData.max_participants) <= 0) {
+      setError('报名人数为必填项，且必须大于0')
+      setLoading(false)
+      return
+    }
+
     // 验证时间
     const validationErrors = validateTimes()
     if (validationErrors.length > 0) {
@@ -204,6 +212,7 @@ const EventCreate = () => {
 
       const submitData = {
         ...formData,
+        max_participants: parseInt(formData.max_participants),
         start_time: formatDateTimeToISO(formData.start_time),
         end_time: formatDateTimeToISO(formData.end_time),
         registration_start_time: formatDateTimeToISO(formData.registration_start_time),
@@ -311,6 +320,18 @@ const EventCreate = () => {
                   placeholder="0x..."
                   required
                   fullWidth
+                />
+                <TextField
+                  label="报名人数 *"
+                  name="max_participants"
+                  type="number"
+                  value={formData.max_participants}
+                  onChange={handleChange}
+                  placeholder="例如: 100"
+                  required
+                  fullWidth
+                  inputProps={{ min: 1 }}
+                  helperText="该活动最多允许的报名人数"
                 />
               </Box>
             </Paper>

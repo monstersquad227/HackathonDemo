@@ -55,6 +55,15 @@ func (s *registrationService) CreateRegistration(req *CreateRegistrationRequest)
 		return nil, errors.New("event is not in registration stage")
 	}
 
+	// Check if registration limit is reached
+	approvedCount, err := s.registrationRepo.CountApprovedByEventID(req.EventID)
+	if err != nil {
+		return nil, err
+	}
+	if int64(event.MaxParticipants) > 0 && approvedCount >= int64(event.MaxParticipants) {
+		return nil, errors.New("报名人数已满")
+	}
+
 	// Validate that either TeamID or WalletAddress is provided
 	if req.TeamID == nil && req.WalletAddress == "" {
 		return nil, errors.New("either team_id or wallet_address must be provided")
@@ -140,6 +149,15 @@ func (s *registrationService) ApproveRegistration(id uint, organizerAddress stri
 
 	if event.OrganizerAddress != organizerAddress {
 		return nil, errors.New("only organizer can approve registration")
+	}
+
+	// Check if registration limit is reached before approving
+	approvedCount, err := s.registrationRepo.CountApprovedByEventID(registration.EventID)
+	if err != nil {
+		return nil, err
+	}
+	if int64(event.MaxParticipants) > 0 && approvedCount >= int64(event.MaxParticipants) {
+		return nil, errors.New("报名人数已满，无法批准更多报名")
 	}
 
 	registration.Status = models.RegistrationStatusApproved

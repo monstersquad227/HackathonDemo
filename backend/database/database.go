@@ -36,6 +36,23 @@ func Initialize(databaseURL string) *gorm.DB {
 		panic("Failed to migrate base tables: " + err.Error())
 	}
 
+	// Clean up invalid team_id references in registrations before adding foreign key constraint
+	// This prevents foreign key constraint errors when team_id references non-existent teams
+	// First, check if registrations table exists
+	var tableExists int
+	DB.Raw("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'registrations'").Scan(&tableExists)
+	
+	if tableExists > 0 {
+		// Use multi-table UPDATE syntax which is more reliable in MySQL
+		// This will set team_id to NULL for registrations where the team doesn't exist
+		DB.Exec(`
+			UPDATE registrations r
+			LEFT JOIN teams t ON r.team_id = t.id
+			SET r.team_id = NULL
+			WHERE r.team_id IS NOT NULL AND t.id IS NULL
+		`)
+	}
+
 	// Then create tables with foreign keys
 	err = DB.AutoMigrate(
 		&models.Sponsorship{}, // Has FK to FundingPool
@@ -87,6 +104,19 @@ func Initialize(databaseURL string) *gorm.DB {
 	DB.Raw("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'registrations' AND index_name = 'idx_registrations_wallet_address'").Scan(&indexExists)
 	if indexExists == 0 {
 		DB.Exec("CREATE INDEX `idx_registrations_wallet_address` ON `registrations` (`wallet_address`)")
+	}
+
+	// Add max_participants column to events table if it doesn't exist
+	var maxParticipantsExists int
+	DB.Raw("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'events' AND column_name = 'max_participants'").Scan(&maxParticipantsExists)
+	
+	if maxParticipantsExists == 0 {
+		// Add max_participants column with default value 0 (unlimited)
+		// First add as nullable
+		err = DB.Exec("ALTER TABLE `events` ADD COLUMN `max_participants` INT NOT NULL DEFAULT 0").Error
+		if err != nil && !contains(err.Error(), "Duplicate") {
+			// Log but don't panic
+		}
 	}
 
 	return DB

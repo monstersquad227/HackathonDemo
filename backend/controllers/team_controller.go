@@ -18,7 +18,8 @@ type TeamController struct {
 func NewTeamController(db *gorm.DB) *TeamController {
 	teamRepo := repositories.NewTeamRepository(db)
 	eventRepo := repositories.NewEventRepository(db)
-	service := services.NewTeamService(teamRepo, eventRepo)
+	registrationRepo := repositories.NewRegistrationRepository(db)
+	service := services.NewTeamService(teamRepo, eventRepo, registrationRepo)
 	return &TeamController{service: service}
 }
 
@@ -97,6 +98,23 @@ func (c *TeamController) GetTeamsByMember(ctx *gin.Context) {
 	}
 
 	teams, err := c.service.GetTeamsByMember(address)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, teams)
+}
+
+// GetTeamsByEvent retrieves teams by event ID
+func (c *TeamController) GetTeamsByEvent(ctx *gin.Context) {
+	eventID, err := strconv.ParseUint(ctx.Param("eventId"), 10, 32)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid event ID"})
+		return
+	}
+
+	teams, err := c.service.GetTeamsByEventID(uint(eventID))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 		return

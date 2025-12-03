@@ -8,6 +8,7 @@ import FundingPoolManagement from './components/FundingPoolManagement'
 import TeamManagement from './components/TeamManagement'
 import RegistrationManagement from './components/RegistrationManagement'
 import Registration from './components/Registration'
+import RegistrationQuery from './components/RegistrationQuery'
 import CheckInManagement from './components/CheckInManagement'
 import CheckIn from './components/CheckIn'
 import SubmissionList from './components/SubmissionList'
@@ -51,9 +52,6 @@ function App() {
               <Button color="inherit" component={RouterLink} to="/sponsors">
                 赞助商管理
               </Button>
-              <Button color="inherit" component={RouterLink} to="/teams">
-                队伍管理
-              </Button>
             </Box>
           </Toolbar>
         </AppBar>
@@ -65,12 +63,14 @@ function App() {
             <Route path="/events/:eventId/funding-pool" element={<FundingPoolManagement />} />
             <Route path="/events/:eventId/register" element={<Registration />} />
             <Route path="/events/:eventId/registrations" element={<RegistrationManagement />} />
+            <Route path="/events/:eventId/registration-query" element={<RegistrationQuery />} />
             <Route path="/events/:eventId/check-in" element={<CheckInManagement />} />
             <Route path="/events/:eventId/checkin" element={<CheckIn />} />
             <Route path="/events/:eventId/submissions" element={<SubmissionList />} />
             <Route path="/events/:eventId/submit" element={<SubmissionForm />} />
             <Route path="/events/:eventId/voting" element={<VotingPanel />} />
             <Route path="/events/:eventId/results" element={<Results />} />
+            <Route path="/events/:eventId/teams" element={<TeamManagement />} />
             <Route path="/sponsors" element={<SponsorManagement />} />
             <Route path="/teams" element={<TeamManagement />} />
           </Routes>
