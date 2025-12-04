@@ -96,23 +96,27 @@ const WalletTest = () => {
       const status = await checkMetaMaskStatus(ethereum)
       console.log('MetaMask 状态:', status)
 
-      if (!status.hasAccounts) {
-        // 如果没有账户，给出明确的提示
-        setError(
-          'MetaMask 钱包中没有账户。请按照以下步骤操作：\n\n' +
-          '1. 点击浏览器工具栏的 MetaMask 图标（🦊）\n' +
-          '2. 如果 MetaMask 已锁定，请输入密码解锁\n' +
-          '3. 如果 MetaMask 中没有账户，请点击"创建账户"或"导入账户"\n' +
-          '4. 创建或导入账户后，再次点击"连接 MetaMask 钱包"按钮'
-        )
-        setLoading(false)
-        return
-      }
+      // if (!status.hasAccounts) {
+      //   // 如果没有账户，给出明确的提示
+      //   setError(
+      //     'MetaMask 钱包中没有账户。请按照以下步骤操作：\n\n' +
+      //     '1. 点击浏览器工具栏的 MetaMask 图标（🦊）\n' +
+      //     '2. 如果 MetaMask 已锁定，请输入密码解锁\n' +
+      //     '3. 如果 MetaMask 中没有账户，请点击"创建账户"或"导入账户"\n' +
+      //     '4. 创建或导入账户后，再次点击"连接 MetaMask 钱包"按钮'
+      //   )
+      //   setLoading(false)
+      //   return
+      // }
+
+      const Account = await ethereum.request({
+        method: 'eth_requestAccounts',
+      })
 
       // 如果有已连接的账户，直接使用
-      if (status.accounts.length > 0) {
-        console.log('发现已连接的账户:', status.accounts)
-        const address = status.accounts[0]
+      if (Account.length > 0) {
+        console.log('发现已连接的账户:', Account)
+        const address = Account[0]
         
         // 创建 provider
         const provider = new ethers.BrowserProvider(ethereum)
