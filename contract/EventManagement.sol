@@ -6,6 +6,19 @@ pragma solidity ^0.8.19;
  * @dev Smart contract for managing hackathon events on-chain
  */
 contract EventManagement {
+    // Custom errors for gas optimization
+    error InvalidTimeRange();
+    error EmptyEventName();
+    error InvalidTimeSequence();
+    error StringTooLong();
+    error EventNotFound();
+    error Unauthorized();
+    error InvalidPrizeCount();
+
+    // Constants
+    uint256 public constant MAX_STRING_LENGTH = 500; // Maximum length for string fields
+    uint256 public constant MAX_PRIZES = 50; // Maximum number of prizes per event
+
     // Event stage enumeration
     enum EventStage {
         Registration,
@@ -113,8 +126,61 @@ contract EventManagement {
         bool _allowPublicVoting,
         Prize[] memory _prizes
     ) public returns (uint256) {
-        require(_endTime > _startTime, "End time must be after start time");
-        require(bytes(_name).length > 0, "Event name cannot be empty");
+        // Validate event name
+        if (bytes(_name).length == 0) {
+            revert EmptyEventName();
+        }
+        if (bytes(_name).length > MAX_STRING_LENGTH) {
+            revert StringTooLong();
+        }
+
+        // Validate time ranges
+        if (_endTime <= _startTime) {
+            revert InvalidTimeRange();
+        }
+
+        // Validate string lengths
+        if (bytes(_description).length > MAX_STRING_LENGTH || 
+            bytes(_location).length > MAX_STRING_LENGTH) {
+            revert StringTooLong();
+        }
+
+        // Validate time sequence: all stage times should be within event time range
+        if (_registrationStartTime < _startTime || 
+            _registrationEndTime > _endTime ||
+            _checkInStartTime < _startTime || 
+            _checkInEndTime > _endTime ||
+            _submissionStartTime < _startTime || 
+            _submissionEndTime > _endTime ||
+            _votingStartTime < _startTime || 
+            _votingEndTime > _endTime) {
+            revert InvalidTimeSequence();
+        }
+
+        // Validate stage time order
+        if (_registrationEndTime <= _registrationStartTime ||
+            _checkInEndTime <= _checkInStartTime ||
+            _submissionEndTime <= _submissionStartTime ||
+            _votingEndTime <= _votingStartTime) {
+            revert InvalidTimeSequence();
+        }
+
+        // Validate prizes
+        if (_prizes.length > MAX_PRIZES) {
+            revert InvalidPrizeCount();
+        }
+
+        // Validate prize data
+        for (uint256 i = 0; i < _prizes.length; i++) {
+            if (bytes(_prizes[i].name).length == 0) {
+                revert EmptyEventName();
+            }
+            if (bytes(_prizes[i].name).length > MAX_STRING_LENGTH ||
+                bytes(_prizes[i].description).length > MAX_STRING_LENGTH ||
+                bytes(_prizes[i].amount).length > MAX_STRING_LENGTH) {
+                revert StringTooLong();
+            }
+        }
 
         eventCounter++;
         uint256 eventId = eventCounter;
@@ -155,7 +221,9 @@ contract EventManagement {
      * @param _eventId Event ID
      */
     function getEvent(uint256 _eventId) public view returns (Event memory) {
-        require(events[_eventId].exists, "Event does not exist");
+        if (!events[_eventId].exists) {
+            revert EventNotFound();
+        }
         return events[_eventId];
     }
 
@@ -164,7 +232,9 @@ contract EventManagement {
      * @param _eventId Event ID
      */
     function getEventPrizes(uint256 _eventId) public view returns (Prize[] memory) {
-        require(events[_eventId].exists, "Event does not exist");
+        if (!events[_eventId].exists) {
+            revert EventNotFound();
+        }
         return eventPrizes[_eventId];
     }
 
@@ -174,8 +244,12 @@ contract EventManagement {
      * @param _newStage New stage
      */
     function updateStage(uint256 _eventId, EventStage _newStage) public {
-        require(events[_eventId].exists, "Event does not exist");
-        require(events[_eventId].organizer == msg.sender, "Only organizer can update stage");
+        if (!events[_eventId].exists) {
+            revert EventNotFound();
+        }
+        if (events[_eventId].organizer != msg.sender) {
+            revert Unauthorized();
+        }
         
         EventStage oldStage = events[_eventId].currentStage;
         events[_eventId].currentStage = _newStage;
@@ -196,8 +270,22 @@ contract EventManagement {
         string memory _description,
         string memory _location
     ) public {
-        require(events[_eventId].exists, "Event does not exist");
-        require(events[_eventId].organizer == msg.sender, "Only organizer can update event");
+        if (!events[_eventId].exists) {
+            revert EventNotFound();
+        }
+        if (events[_eventId].organizer != msg.sender) {
+            revert Unauthorized();
+        }
+
+        // Validate inputs
+        if (bytes(_name).length == 0) {
+            revert EmptyEventName();
+        }
+        if (bytes(_name).length > MAX_STRING_LENGTH ||
+            bytes(_description).length > MAX_STRING_LENGTH ||
+            bytes(_location).length > MAX_STRING_LENGTH) {
+            revert StringTooLong();
+        }
         
         events[_eventId].name = _name;
         events[_eventId].description = _description;

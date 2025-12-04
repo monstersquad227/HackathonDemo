@@ -14,8 +14,6 @@ import TableBody from '@mui/material/TableBody'
 import TableRow from '@mui/material/TableRow'
 import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
-import { QRCodeSVG } from 'qrcode.react'
-
 const CheckInManagement = () => {
   const { eventId } = useParams()
   const navigate = useNavigate()
@@ -23,8 +21,6 @@ const CheckInManagement = () => {
   const [checkInCount, setCheckInCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [qrCode, setQrCode] = useState(null)
-  const [showQRCode, setShowQRCode] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -47,16 +43,6 @@ const CheckInManagement = () => {
     }
   }
 
-  const handleGenerateQRCode = async () => {
-    try {
-      const qrData = await checkinApi.generateQRCode(eventId)
-      setQrCode(qrData)
-      setShowQRCode(true)
-    } catch (err) {
-      alert('生成二维码失败: ' + (err.response?.data?.error || err.message))
-    }
-  }
-
   const formatDate = (dateString) => {
     if (!dateString) return '-'
     const date = new Date(dateString)
@@ -69,10 +55,9 @@ const CheckInManagement = () => {
       return
     }
 
-    const headers = ['用户地址', '队伍', '签到时间', 'IP地址', '设备信息', '交易哈希']
+    const headers = ['用户地址', '签到时间', 'IP地址', '设备信息', '交易哈希']
     const rows = checkIns.map((checkIn) => [
       checkIn.user_address,
-      checkIn.team?.name || '-',
       formatDate(checkIn.check_in_time),
       checkIn.ip_address || '-',
       checkIn.device_info || '-',
@@ -103,9 +88,6 @@ const CheckInManagement = () => {
           签到管理
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="contained" onClick={handleGenerateQRCode}>
-            生成签到二维码
-          </Button>
           <Button variant="outlined" onClick={exportToCSV}>
             导出签到记录
           </Button>
@@ -134,60 +116,6 @@ const CheckInManagement = () => {
         </Box>
       </Paper>
 
-      {showQRCode && qrCode && (
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            签到二维码
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 2, bgcolor: 'white', borderRadius: 2 }}>
-              <QRCodeSVG
-                value={`${window.location.origin}/events/${eventId}/checkin`}
-                size={256}
-                level="H"
-                includeMargin={true}
-              />
-            </Box>
-            <Box>
-              <Typography variant="body2" gutterBottom>
-                <strong>签名消息:</strong>
-              </Typography>
-              <Box
-                component="pre"
-                sx={{
-                  p: 2,
-                  borderRadius: 1,
-                  bgcolor: 'grey.100',
-                  overflow: 'auto',
-                  maxHeight: 200,
-                }}
-              >
-                {qrCode.message}
-              </Box>
-            </Box>
-            <Typography variant="body2">
-              <strong>有效期至:</strong>{' '}
-              {new Date(qrCode.expires_at).toLocaleString('zh-CN')}
-            </Typography>
-            <Box>
-              <Typography variant="subtitle1" gutterBottom>
-                使用说明
-              </Typography>
-              <ol style={{ paddingLeft: '1.5rem', margin: 0 }}>
-                <li>用户扫描二维码进入活动钱包页面</li>
-                <li>使用钱包对消息进行签名</li>
-                <li>提交签名完成签到</li>
-              </ol>
-            </Box>
-            <Box sx={{ mt: 1 }}>
-              <Button variant="outlined" onClick={() => setShowQRCode(false)}>
-                关闭
-              </Button>
-            </Box>
-          </Box>
-        </Paper>
-      )}
-
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
           签到记录 ({checkIns.length})
@@ -204,7 +132,6 @@ const CheckInManagement = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>用户地址</TableCell>
-                  <TableCell>队伍</TableCell>
                   <TableCell>签到时间</TableCell>
                   <TableCell>IP地址</TableCell>
                   <TableCell>设备信息</TableCell>
@@ -217,7 +144,6 @@ const CheckInManagement = () => {
                     <TableCell>
                       {checkIn.user_address?.slice(0, 10)}...
                     </TableCell>
-                    <TableCell>{checkIn.team?.name || '-'}</TableCell>
                     <TableCell>{formatDate(checkIn.check_in_time)}</TableCell>
                     <TableCell>{checkIn.ip_address || '-'}</TableCell>
                     <TableCell>{checkIn.device_info || '-'}</TableCell>

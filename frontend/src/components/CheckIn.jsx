@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { ethers } from 'ethers'
 import { checkinApi } from '../api/checkinApi'
+import { useWallet } from '../contexts/WalletContext'
+import { validateRegistration } from '../utils/walletValidation'
 import './CheckIn.css'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -11,62 +13,69 @@ import Alert from '@mui/material/Alert'
 
 const CheckIn = () => {
   const { eventId } = useParams()
+  const { account: userAddress } = useWallet()
   const [message, setMessage] = useState('')
   const [signature, setSignature] = useState('')
-  const [userAddress, setUserAddress] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
   const [checkInStatus, setCheckInStatus] = useState(null)
+  const [isRegistered, setIsRegistered] = useState(false)
+  const [validating, setValidating] = useState(false)
 
+  // 验证是否报名并检查签到状态
   useEffect(() => {
-    // Check if already checked in
-    checkCheckInStatus()
-  }, [eventId])
+    const validateAndCheckStatus = async () => {
+      if (!userAddress) {
+        setIsRegistered(false)
+        setCheckInStatus(null)
+        return
+      }
 
-  const checkCheckInStatus = async () => {
-    if (!window.ethereum) {
-      return
+      setValidating(true)
+      try {
+        // 验证是否报名
+        const registrationResult = await validateRegistration(eventId, userAddress)
+        setIsRegistered(registrationResult.isRegistered)
+
+        if (!registrationResult.isRegistered) {
+          setError('您尚未报名参加此活动，请先报名')
+          setCheckInStatus(null)
+          setValidating(false)
+          return
+        }
+
+        // 检查是否已签到
+        try {
+          const checkIn = await checkinApi.getUserCheckIn(eventId, userAddress)
+          setCheckInStatus(checkIn)
+          setError(null)
+        } catch (err) {
+          // 用户未签到，这是正常的
+          setCheckInStatus(null)
+          setError(null)
+        }
+      } catch (err) {
+        console.error('验证失败:', err)
+        setError('验证报名状态失败: ' + err.message)
+      } finally {
+        setValidating(false)
+      }
     }
 
+    validateAndCheckStatus()
+  }, [userAddress, eventId])
+
+  const handleFillMessage = async () => {
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      const signer = await provider.getSigner()
-      const address = await signer.getAddress()
-      setUserAddress(address)
-
-      const checkIn = await checkinApi.getUserCheckIn(eventId, address)
-      setCheckInStatus(checkIn)
+      const qrData = await checkinApi.generateQRCode(eventId)
+      // 自动填充签名消息
+      if (qrData.message) {
+        setMessage(qrData.message)
+        setError(null)
+      }
     } catch (err) {
-      // User not checked in yet
-      setCheckInStatus(null)
-    }
-  }
-
-  const connectWallet = async () => {
-    if (!window.ethereum) {
-      alert('请安装MetaMask钱包')
-      return
-    }
-
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      await provider.send('eth_requestAccounts', [])
-      const signer = await provider.getSigner()
-      const address = await signer.getAddress()
-      setUserAddress(address)
-      setError(null)
-    } catch (err) {
-      setError('连接钱包失败: ' + err.message)
-    }
-  }
-
-  const scanQRCode = () => {
-    // In a real implementation, this would use a QR code scanner
-    // For now, we'll prompt user to enter the message manually
-    const qrMessage = prompt('请扫描二维码或粘贴签名消息:')
-    if (qrMessage) {
-      setMessage(qrMessage)
+      setError('获取签名消息失败: ' + (err.response?.data?.error || err.message))
     }
   }
 
@@ -77,12 +86,17 @@ const CheckIn = () => {
     }
 
     if (!message) {
-      alert('请先扫描二维码获取签名消息')
+      alert('请先填写签到签名消息')
       return
     }
 
     if (!userAddress) {
-      await connectWallet()
+      setError('请先连接钱包')
+      return
+    }
+
+    if (!isRegistered) {
+      setError('您尚未报名参加此活动，无法完成签到')
       return
     }
 
@@ -180,7 +194,7 @@ const CheckIn = () => {
         </Typography>
         <ol style={{ paddingLeft: '1.5rem', margin: 0 }}>
           <li>连接钱包</li>
-          <li>扫描二维码获取签名消息</li>
+          <li>填写签到签名消息</li>
           <li>对消息进行签名</li>
           <li>提交签到</li>
         </ol>
@@ -188,35 +202,48 @@ const CheckIn = () => {
 
       <Box sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1 }}>
         {!userAddress ? (
-          <Button
-            variant="contained"
-            size="large"
-            onClick={connectWallet}
-            sx={{ mb: 2 }}
-          >
-            连接钱包
-          </Button>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            请使用右上角的"连接钱包"按钮连接您的钱包
+          </Alert>
         ) : (
           <Box sx={{ mb: 2 }}>
-            <Typography variant="body2">
+            <Typography variant="body2" sx={{ mb: 1 }}>
               <strong>已连接:</strong> {userAddress?.slice(0, 10)}...
             </Typography>
+            {validating ? (
+              <Typography variant="body2" color="text.secondary">
+                验证报名状态中...
+              </Typography>
+            ) : !isRegistered ? (
+              <Alert severity="error" sx={{ mt: 1 }}>
+                您尚未报名参加此活动，无法完成签到
+              </Alert>
+            ) : (
+              <Alert severity="success" sx={{ mt: 1 }}>
+                已报名，可以进行签到
+              </Alert>
+            )}
           </Box>
         )}
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
             <TextField
               label="签名消息"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="请扫描二维码获取签名消息"
+              placeholder="请点击右侧按钮填写签到签名消息"
               multiline
               rows={4}
               fullWidth
             />
-            <Button variant="outlined" onClick={scanQRCode} sx={{ whiteSpace: 'nowrap', height: 'fit-content' }}>
-              扫描二维码
+            <Button 
+              variant="contained" 
+              onClick={handleFillMessage} 
+              disabled={!userAddress}
+              sx={{ whiteSpace: 'nowrap', height: 'fit-content' }}
+            >
+              填写签到签名消息
             </Button>
           </Box>
 
@@ -233,7 +260,7 @@ const CheckIn = () => {
             variant="contained"
             size="large"
             onClick={signMessage}
-            disabled={loading || !message || !userAddress}
+            disabled={loading || !message || !userAddress || !isRegistered || validating}
           >
             {loading ? '处理中...' : '确认签到'}
           </Button>

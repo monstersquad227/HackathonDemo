@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ethers } from 'ethers'
 import { submissionApi } from '../api/submissionApi'
 import { teamApi } from '../api/teamApi'
+import { useWallet } from '../contexts/WalletContext'
 import BackToEventDetail from './BackToEventDetail'
 import './SubmissionForm.css'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import TextField from '@mui/material/TextField'
+import Alert from '@mui/material/Alert'
+import Checkbox from '@mui/material/Checkbox'
+import FormControlLabel from '@mui/material/FormControlLabel'
 
 const SubmissionForm = () => {
   const { eventId } = useParams()
   const navigate = useNavigate()
+  const { account: connectedAddress } = useWallet()
   const [formData, setFormData] = useState({
-    leader_address: '',
     title: '',
     description: '',
     github_repo: '',
@@ -20,11 +26,15 @@ const SubmissionForm = () => {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
-  const [walletAddress, setWalletAddress] = useState('')
   const [existingSubmission, setExistingSubmission] = useState(null)
   const [loading, setLoading] = useState(true)
   const [teamInfo, setTeamInfo] = useState(null)
   const [validatingTeam, setValidatingTeam] = useState(false)
+  const [useConnectedWallet, setUseConnectedWallet] = useState(true)
+  const [manualAddress, setManualAddress] = useState('')
+  
+  // 计算实际使用的钱包地址
+  const walletAddress = useConnectedWallet && connectedAddress ? connectedAddress : manualAddress
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -54,13 +64,20 @@ const SubmissionForm = () => {
           if (existing) {
             setExistingSubmission(existing)
             setFormData({
-              leader_address: existing.submitted_by || '',
               title: existing.title || '',
               description: existing.description || '',
               github_repo: existing.github_repo || '',
               demo_url: existing.demo_url || '',
               documentation: existing.documentation || '',
             })
+            // 如果已存在的提交使用的地址与当前钱包地址一致，使用连接的钱包
+            if (existing.submitted_by?.toLowerCase() === connectedAddress?.toLowerCase()) {
+              setUseConnectedWallet(true)
+              setManualAddress('')
+            } else {
+              setUseConnectedWallet(false)
+              setManualAddress(existing.submitted_by || '')
+            }
             // 加载队伍信息
             if (existing.team_id) {
               await loadTeamInfo(existing.team_id)
@@ -78,31 +95,20 @@ const SubmissionForm = () => {
       }
     }
     loadExistingSubmission()
-  }, [eventId, walletAddress])
+  }, [eventId, walletAddress, connectedAddress])
 
-  const connectWallet = async () => {
-    if (!window.ethereum) {
-      alert('请安装 MetaMask 钱包')
-      return
+  // 当钱包地址改变时，自动查找队伍
+  useEffect(() => {
+    const checkTeam = async () => {
+      if (walletAddress && validateAddress(walletAddress)) {
+        await findTeamByLeader(walletAddress)
+      } else {
+        setTeamInfo(null)
+      }
     }
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      await provider.send('eth_requestAccounts', [])
-      const signer = await provider.getSigner()
-      const address = await signer.getAddress()
-      setWalletAddress(address)
-      // 如果连接钱包成功，自动填入队长钱包地址
-      setFormData((prev) => ({
-        ...prev,
-        leader_address: address,
-      }))
-      // 自动查找队伍
-      await findTeamByLeader(address)
-      setError(null)
-    } catch (err) {
-      setError('连接钱包失败: ' + err.message)
-    }
-  }
+    checkTeam()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletAddress, eventId])
 
   // 通过队长钱包地址查找队伍
   const loadTeamInfo = async (teamId) => {
@@ -148,7 +154,7 @@ const SubmissionForm = () => {
     e.preventDefault()
     
     // 验证所有必填字段
-    if (!formData.leader_address) {
+    if (!walletAddress || walletAddress.trim() === '') {
       setError('请输入队长钱包地址')
       return
     }
@@ -174,14 +180,14 @@ const SubmissionForm = () => {
     }
     
     // 验证队长钱包地址格式
-    if (!validateAddress(formData.leader_address)) {
+    if (!validateAddress(walletAddress)) {
       setError('请输入有效的队长钱包地址（0x开头的42位地址）')
       return
     }
 
     // 验证队长钱包地址是否在该活动中有队伍
     if (!teamInfo) {
-      const hasTeam = await findTeamByLeader(formData.leader_address)
+      const hasTeam = await findTeamByLeader(walletAddress)
       if (!hasTeam) {
         setError('该钱包地址在此活动中没有对应的队伍')
         return
@@ -200,7 +206,7 @@ const SubmissionForm = () => {
           github_repo: formData.github_repo.trim(),
           demo_url: formData.demo_url.trim(),
           documentation: formData.documentation.trim(),
-          submitted_by: formData.leader_address, // 用于验证是否是队长
+          submitted_by: walletAddress, // 用于验证是否是队长
         }
         await submissionApi.updateSubmission(existingSubmission.id, updatePayload)
         setSuccess(true)
@@ -214,18 +220,18 @@ const SubmissionForm = () => {
           github_repo: formData.github_repo.trim(),
           demo_url: formData.demo_url.trim(),
           documentation: formData.documentation.trim(),
-          submitted_by: formData.leader_address,
+          submitted_by: walletAddress,
         }
         await submissionApi.createSubmission(payload)
         setSuccess(true)
         setFormData({
-          leader_address: '',
           title: '',
           description: '',
           github_repo: '',
           demo_url: '',
           documentation: '',
         })
+        setManualAddress('')
         setTeamInfo(null)
       }
     } catch (err) {
@@ -253,53 +259,60 @@ const SubmissionForm = () => {
       <div className="card">
         <form onSubmit={handleSubmit} className="submission-form">
           <div className="form-group">
-            <label>队长钱包地址 *</label>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <input
-                type="text"
-                name="leader_address"
-                value={formData.leader_address}
-                onChange={async (e) => {
-                  handleChange(e)
-                  // 当地址改变时，自动查找队伍
-                  if (e.target.value && validateAddress(e.target.value)) {
-                    await findTeamByLeader(e.target.value)
-                  } else {
-                    setTeamInfo(null)
-                  }
-                }}
-                placeholder="0x..."
-                required
-                style={{ flex: 1 }}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                队长钱包地址 *
+              </Typography>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={useConnectedWallet}
+                    onChange={(e) => {
+                      setUseConnectedWallet(e.target.checked)
+                      if (!e.target.checked) {
+                        setManualAddress('')
+                      }
+                    }}
+                    disabled={!connectedAddress}
+                  />
+                }
+                label={connectedAddress ? `使用连接的钱包 (${connectedAddress.slice(0, 6)}...${connectedAddress.slice(-4)})` : '使用连接的钱包（请先连接钱包）'}
               />
-              <button
-                type="button"
-                onClick={connectWallet}
-                className="btn btn-secondary"
-              >
-                连接钱包
-              </button>
-            </div>
-            {validatingTeam && (
-              <p className="hint" style={{ marginTop: '5px', fontSize: '0.9em', color: '#666' }}>
-                正在查找队伍...
-              </p>
-            )}
-            {teamInfo && !validatingTeam && (
-              <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#e8f5e9', borderRadius: '4px' }}>
-                <p style={{ margin: 0, fontSize: '0.9em' }}>
-                  <strong>找到队伍：</strong>{teamInfo.name} (ID: {teamInfo.id})
-                </p>
-              </div>
-            )}
-            {!teamInfo && !validatingTeam && formData.leader_address && validateAddress(formData.leader_address) && (
-              <p className="hint" style={{ marginTop: '5px', fontSize: '0.9em', color: '#f44336' }}>
-                未找到该钱包地址在此活动中的队伍
-              </p>
-            )}
-            <p className="hint" style={{ marginTop: '5px', fontSize: '0.9em', color: '#666' }}>
-              请输入队长钱包地址，系统将自动查找该地址在此活动中的队伍
-            </p>
+              {!useConnectedWallet && (
+                <TextField
+                  label="手动输入钱包地址"
+                  value={manualAddress}
+                  onChange={(e) => setManualAddress(e.target.value)}
+                  placeholder="0x..."
+                  fullWidth
+                  helperText="请输入以太坊钱包地址（42字符，以0x开头）"
+                  error={manualAddress && !/^0x[a-fA-F0-9]{40}$/.test(manualAddress.trim())}
+                />
+              )}
+              {useConnectedWallet && !connectedAddress && (
+                <Alert severity="info" sx={{ py: 0.5 }}>
+                  请使用右上角的"连接钱包"按钮连接您的钱包，或取消勾选使用手动输入
+                </Alert>
+              )}
+              {validatingTeam && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  正在查找队伍...
+                </Typography>
+              )}
+              {teamInfo && !validatingTeam && (
+                <Alert severity="success" sx={{ mt: 1 }}>
+                  找到队伍：{teamInfo.name} (ID: {teamInfo.id})
+                </Alert>
+              )}
+              {!teamInfo && !validatingTeam && walletAddress && validateAddress(walletAddress) && (
+                <Alert severity="error" sx={{ mt: 1 }}>
+                  未找到该钱包地址在此活动中的队伍
+                </Alert>
+              )}
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                请输入队长钱包地址，系统将自动查找该地址在此活动中的队伍
+              </Typography>
+            </Box>
           </div>
           <div className="form-group">
             <label>作品标题 *</label>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { teamApi } from '../api/teamApi'
+import { useWallet } from '../contexts/WalletContext'
+import { validateRegistrationAndCheckIn } from '../utils/walletValidation'
 import BackToEventDetail from './BackToEventDetail'
 import './TeamManagement.css'
 import Box from '@mui/material/Box'
@@ -11,6 +13,8 @@ import Grid from '@mui/material/Grid'
 import Paper from '@mui/material/Paper'
 import Chip from '@mui/material/Chip'
 import Alert from '@mui/material/Alert'
+import Checkbox from '@mui/material/Checkbox'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
@@ -19,6 +23,7 @@ import DialogActions from '@mui/material/DialogActions'
 const TeamManagement = () => {
   const { eventId } = useParams()
   const navigate = useNavigate()
+  const { account: connectedAddress } = useWallet()
   const [teams, setTeams] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -27,14 +32,22 @@ const TeamManagement = () => {
     event_id: eventId ? parseInt(eventId) : '',
     name: '',
     description: '',
-    leader_address: '',
     max_members: 5,
     skills: '',
     members: [],
   })
   const [joinDialogOpen, setJoinDialogOpen] = useState(false)
   const [selectedTeam, setSelectedTeam] = useState(null)
-  const [joinMemberAddress, setJoinMemberAddress] = useState('')
+  const [isValidated, setIsValidated] = useState(false)
+  const [validating, setValidating] = useState(false)
+  const [validationError, setValidationError] = useState(null)
+  const [useConnectedWallet, setUseConnectedWallet] = useState(true)
+  const [manualAddress, setManualAddress] = useState('')
+  const [useConnectedWalletForJoin, setUseConnectedWalletForJoin] = useState(true)
+  const [manualAddressForJoin, setManualAddressForJoin] = useState('')
+  
+  const walletAddress = useConnectedWallet && connectedAddress ? connectedAddress : manualAddress
+  const joinWalletAddress = useConnectedWalletForJoin && connectedAddress ? connectedAddress : manualAddressForJoin
 
   useEffect(() => {
     loadTeams()
@@ -60,6 +73,49 @@ const TeamManagement = () => {
     }
   }
 
+  // 验证钱包地址是否报名并签到（创建队伍）
+  useEffect(() => {
+    const validateWallet = async () => {
+      if (!walletAddress || !eventId || walletAddress.trim() === '') {
+        setIsValidated(false)
+        setValidationError(null)
+        return
+      }
+
+      // 验证地址格式
+      if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress.trim())) {
+        setIsValidated(false)
+        setValidationError('请输入有效的钱包地址')
+        return
+      }
+
+      setValidating(true)
+      setValidationError(null)
+      try {
+        const result = await validateRegistrationAndCheckIn(eventId, walletAddress.trim())
+        if (result.isRegistered && result.isCheckedIn) {
+          setIsValidated(true)
+          setValidationError(null)
+        } else {
+          setIsValidated(false)
+          if (!result.isRegistered) {
+            setValidationError('该钱包地址尚未报名参加此活动')
+          } else if (!result.isCheckedIn) {
+            setValidationError('该钱包地址尚未完成签到，无法创建或加入队伍')
+          }
+        }
+      } catch (err) {
+        console.error('验证失败:', err)
+        setIsValidated(false)
+        setValidationError('验证失败: ' + err.message)
+      } finally {
+        setValidating(false)
+      }
+    }
+
+    validateWallet()
+  }, [walletAddress, eventId])
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({
@@ -68,25 +124,38 @@ const TeamManagement = () => {
     }))
   }
 
-
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formData.name || !formData.description || !formData.leader_address || !formData.max_members) {
-      alert('请填写所有必填字段：队伍名称、队伍描述、队长钱包地址、最大成员数')
+    if (!formData.name || !formData.description || !formData.max_members) {
+      alert('请填写所有必填字段：队伍名称、队伍描述、最大成员数')
       return
     }
     if (!formData.event_id) {
       alert('请选择活动')
       return
     }
+    if (!walletAddress || walletAddress.trim() === '') {
+      alert('请输入钱包地址')
+      return
+    }
+    if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress.trim())) {
+      alert('请输入有效的钱包地址（以太坊地址格式：0x开头，42字符）')
+      return
+    }
+    if (!isValidated) {
+      alert(validationError || '请先报名并完成签到')
+      return
+    }
     try {
-      await teamApi.createTeam(formData)
+      await teamApi.createTeam({
+        ...formData,
+        leader_address: walletAddress.trim(),
+      })
       setShowCreateForm(false)
       setFormData({
         event_id: eventId ? parseInt(eventId) : '',
         name: '',
         description: '',
-        leader_address: '',
         max_members: 5,
         skills: '',
         members: [],
@@ -105,24 +174,52 @@ const TeamManagement = () => {
       return
     }
     setSelectedTeam(team)
-    setJoinMemberAddress('')
+    setManualAddressForJoin('')
+    setUseConnectedWalletForJoin(true)
     setJoinDialogOpen(true)
   }
 
   const handleJoinSubmit = async () => {
-    if (!joinMemberAddress) {
+    if (!joinWalletAddress || joinWalletAddress.trim() === '') {
       alert('请输入钱包地址')
       return
     }
+    if (!/^0x[a-fA-F0-9]{40}$/.test(joinWalletAddress.trim())) {
+      alert('请输入有效的钱包地址（以太坊地址格式：0x开头，42字符）')
+      return
+    }
+    
+    // 验证加入队伍的钱包地址
+    setValidating(true)
     try {
-      await teamApi.addMember(selectedTeam.id, { address: joinMemberAddress })
-      setJoinDialogOpen(false)
-      setSelectedTeam(null)
-      setJoinMemberAddress('')
-      loadTeams()
-      alert('加入队伍成功')
+      const result = await validateRegistrationAndCheckIn(eventId, joinWalletAddress.trim())
+      if (!result.isRegistered || !result.isCheckedIn) {
+        if (!result.isRegistered) {
+          alert('该钱包地址尚未报名参加此活动')
+        } else if (!result.isCheckedIn) {
+          alert('该钱包地址尚未完成签到，无法加入队伍')
+        }
+        setValidating(false)
+        return
+      }
+      
+      // 验证通过，加入队伍
+      try {
+        await teamApi.addMember(selectedTeam.id, { address: joinWalletAddress.trim() })
+        setJoinDialogOpen(false)
+        setSelectedTeam(null)
+        setManualAddressForJoin('')
+        setUseConnectedWalletForJoin(true)
+        loadTeams()
+        alert('加入队伍成功')
+      } catch (err) {
+        alert('加入队伍失败: ' + (err.response?.data?.error || err.message))
+      } finally {
+        setValidating(false)
+      }
     } catch (err) {
-      alert('加入队伍失败: ' + (err.response?.data?.error || err.message))
+      alert('验证失败: ' + err.message)
+      setValidating(false)
     }
   }
 
@@ -195,18 +292,62 @@ const TeamManagement = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={8}>
-                <TextField
-                  label="队长钱包地址 *"
-                  name="leader_address"
-                  value={formData.leader_address}
-                  onChange={handleChange}
-                  placeholder="0x..."
-                  required
-                  fullWidth
-                />
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    队长钱包地址 *
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={useConnectedWallet}
+                        onChange={(e) => {
+                          setUseConnectedWallet(e.target.checked)
+                          if (!e.target.checked) {
+                            setManualAddress('')
+                          }
+                        }}
+                        disabled={!connectedAddress}
+                      />
+                    }
+                    label={connectedAddress ? `使用连接的钱包 (${connectedAddress.slice(0, 6)}...${connectedAddress.slice(-4)})` : '使用连接的钱包（请先连接钱包）'}
+                  />
+                  {!useConnectedWallet && (
+                    <TextField
+                      label="手动输入钱包地址"
+                      value={manualAddress}
+                      onChange={(e) => setManualAddress(e.target.value)}
+                      placeholder="0x..."
+                      fullWidth
+                      helperText="请输入以太坊钱包地址（42字符，以0x开头）"
+                      error={manualAddress && !/^0x[a-fA-F0-9]{40}$/.test(manualAddress.trim())}
+                    />
+                  )}
+                  {walletAddress && walletAddress.trim() !== '' && (
+                    <>
+                      {validating ? (
+                        <Typography variant="body2" color="text.secondary">
+                          验证中...
+                        </Typography>
+                      ) : !isValidated ? (
+                        <Alert severity="error" sx={{ mt: 1 }}>
+                          {validationError || '请先报名并完成签到'}
+                        </Alert>
+                      ) : (
+                        <Alert severity="success" sx={{ mt: 1 }}>
+                          已验证：已报名并完成签到
+                        </Alert>
+                      )}
+                    </>
+                  )}
+                  {useConnectedWallet && !connectedAddress && (
+                    <Alert severity="info" sx={{ mt: 1 }}>
+                      请使用右上角的"连接钱包"按钮连接您的钱包，或取消勾选使用手动输入
+                    </Alert>
+                  )}
+                </Box>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   label="最大成员数 *"
                   type="number"
@@ -230,7 +371,11 @@ const TeamManagement = () => {
               </Grid>
               <Grid item xs={12}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
-                  <Button type="submit" variant="contained">
+                  <Button 
+                    type="submit" 
+                    variant="contained"
+                    disabled={!walletAddress || !isValidated || validating}
+                  >
                     创建队伍
                   </Button>
                   <Button variant="outlined" onClick={() => setShowCreateForm(false)}>
@@ -374,20 +519,55 @@ const TeamManagement = () => {
               </Typography>
             </Box>
           )}
-          <TextField
-            label="钱包地址 *"
-            value={joinMemberAddress}
-            onChange={(e) => setJoinMemberAddress(e.target.value)}
-            placeholder="0x..."
-            required
-            fullWidth
-            autoFocus
-          />
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              钱包地址 *
+            </Typography>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={useConnectedWalletForJoin}
+                  onChange={(e) => {
+                    setUseConnectedWalletForJoin(e.target.checked)
+                    if (!e.target.checked) {
+                      setManualAddressForJoin('')
+                    }
+                  }}
+                  disabled={!connectedAddress}
+                />
+              }
+              label={connectedAddress ? `使用连接的钱包 (${connectedAddress.slice(0, 6)}...${connectedAddress.slice(-4)})` : '使用连接的钱包（请先连接钱包）'}
+            />
+            {!useConnectedWalletForJoin && (
+              <TextField
+                label="手动输入钱包地址"
+                value={manualAddressForJoin}
+                onChange={(e) => setManualAddressForJoin(e.target.value)}
+                placeholder="0x..."
+                fullWidth
+                helperText="请输入以太坊钱包地址（42字符，以0x开头）"
+                error={manualAddressForJoin && !/^0x[a-fA-F0-9]{40}$/.test(manualAddressForJoin.trim())}
+              />
+            )}
+            {useConnectedWalletForJoin && !connectedAddress && (
+              <Alert severity="info" sx={{ mt: 1 }}>
+                请使用右上角的"连接钱包"按钮连接您的钱包，或取消勾选使用手动输入
+              </Alert>
+            )}
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setJoinDialogOpen(false)}>取消</Button>
-          <Button onClick={handleJoinSubmit} variant="contained">
-            加入
+          <Button onClick={() => {
+            setJoinDialogOpen(false)
+            setManualAddressForJoin('')
+            setUseConnectedWalletForJoin(true)
+          }}>取消</Button>
+          <Button 
+            onClick={handleJoinSubmit} 
+            variant="contained"
+            disabled={!joinWalletAddress || joinWalletAddress.trim() === '' || validating}
+          >
+            {validating ? '验证中...' : '加入'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { eventApi } from '../api/eventApi'
+import { useWallet } from '../contexts/WalletContext'
+import { createEventOnChain, getNetworkOptions, getNetworkDisplayName } from '../utils/contractUtils'
 import './EventCreate.css'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -15,11 +17,18 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
+import Chip from '@mui/material/Chip'
 
 const EventCreate = () => {
   const navigate = useNavigate()
+  const { account: connectedAddress } = useWallet()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [useConnectedWallet, setUseConnectedWallet] = useState(true)
+  const [manualAddress, setManualAddress] = useState('')
+  const [selectedNetwork, setSelectedNetwork] = useState('sepolia') // 默认网络为Sepolia
+  
+  const organizerAddress = useConnectedWallet && connectedAddress ? connectedAddress : manualAddress
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -34,11 +43,10 @@ const EventCreate = () => {
     submission_end_time: '',
     voting_start_time: '',
     voting_end_time: '',
-    organizer_address: '',
     max_participants: '',
     allow_sponsor_voting: false,
     allow_public_voting: false,
-    on_chain: false,
+    on_chain: true, // 默认勾选链上创建
     prizes: [
       { rank: 1, name: '一等奖', description: '', amount: '', count: 1 },
       { rank: 2, name: '二等奖', description: '', amount: '', count: 2 },
@@ -203,6 +211,34 @@ const EventCreate = () => {
       return
     }
 
+    // 验证主办方钱包地址
+    if (!organizerAddress || organizerAddress.trim() === '') {
+      setError('请输入主办方钱包地址')
+      setLoading(false)
+      return
+    }
+
+    // 验证钱包地址格式
+    if (!/^0x[a-fA-F0-9]{40}$/.test(organizerAddress.trim())) {
+      setError('请输入有效的钱包地址（以太坊地址格式：0x开头，42字符）')
+      setLoading(false)
+      return
+    }
+
+    // 如果勾选了链上创建，需要验证钱包连接
+    if (formData.on_chain) {
+      if (!connectedAddress) {
+        setError('链上创建需要连接钱包，请先连接钱包')
+        setLoading(false)
+        return
+      }
+      if (connectedAddress.toLowerCase() !== organizerAddress.trim().toLowerCase()) {
+        setError('链上创建时，主办方地址必须与连接的钱包地址一致')
+        setLoading(false)
+        return
+      }
+    }
+
     try {
       // Convert datetime strings to ISO format
       const formatDateTimeToISO = (dateTimeString) => {
@@ -212,6 +248,7 @@ const EventCreate = () => {
 
       const submitData = {
         ...formData,
+        organizer_address: organizerAddress.trim(),
         max_participants: parseInt(formData.max_participants),
         start_time: formatDateTimeToISO(formData.start_time),
         end_time: formatDateTimeToISO(formData.end_time),
@@ -225,6 +262,23 @@ const EventCreate = () => {
         voting_end_time: formatDateTimeToISO(formData.voting_end_time),
       }
 
+      // 如果勾选了链上创建，先调用智能合约创建活动
+      let onChainResult = null
+      if (formData.on_chain) {
+        try {
+          onChainResult = await createEventOnChain(submitData, selectedNetwork)
+          // 将链上创建的结果添加到提交数据中
+          submitData.contract_address = onChainResult.contractAddress
+          submitData.on_chain_event_id = onChainResult.eventId
+          submitData.tx_hash = onChainResult.txHash
+        } catch (chainError) {
+          setError('链上创建失败: ' + chainError.message)
+          setLoading(false)
+          return
+        }
+      }
+
+      // 调用后端API创建活动
       const event = await eventApi.createEvent(submitData)
       navigate(`/events/${event.id}`)
     } catch (err) {
@@ -312,15 +366,41 @@ const EventCreate = () => {
                     />
                   </Grid>
                 </Grid>
-                <TextField
-                  label="主办方钱包地址 *"
-                  name="organizer_address"
-                  value={formData.organizer_address}
-                  onChange={handleChange}
-                  placeholder="0x..."
-                  required
-                  fullWidth
-                />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    主办方钱包地址 *
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={useConnectedWallet}
+                        onChange={(e) => {
+                          setUseConnectedWallet(e.target.checked)
+                          if (!e.target.checked) {
+                            setManualAddress('')
+                          }
+                        }}
+                        disabled={!connectedAddress}
+                      />
+                    }
+                    label={connectedAddress ? `使用连接的钱包 (${connectedAddress.slice(0, 6)}...${connectedAddress.slice(-4)})` : '使用连接的钱包（请先连接钱包）'}
+                  />
+                  {!useConnectedWallet && (
+                    <TextField
+                      label="手动输入钱包地址"
+                      value={manualAddress}
+                      onChange={(e) => setManualAddress(e.target.value)}
+                      placeholder="0x..."
+                      fullWidth
+                      helperText="请输入以太坊钱包地址（42字符，以0x开头）"
+                    />
+                  )}
+                  {useConnectedWallet && !connectedAddress && (
+                    <Alert severity="info" sx={{ py: 0.5 }}>
+                      请使用右上角的"连接钱包"按钮连接您的钱包，或取消勾选使用手动输入
+                    </Alert>
+                  )}
+                </Box>
                 <TextField
                   label="报名人数 *"
                   name="max_participants"
@@ -333,6 +413,45 @@ const EventCreate = () => {
                   inputProps={{ min: 1 }}
                   helperText="该活动最多允许的报名人数"
                 />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        name="on_chain"
+                        checked={formData.on_chain}
+                        onChange={handleChange}
+                      />
+                    }
+                    label="链上创建（需要连接钱包）"
+                  />
+                  {formData.on_chain && (
+                    <>
+                      {!connectedAddress && (
+                        <Alert severity="warning" sx={{ py: 0.5 }}>
+                          请先连接钱包以进行链上创建
+                        </Alert>
+                      )}
+                      <FormControl fullWidth>
+                        <InputLabel>选择网络 *</InputLabel>
+                        <Select
+                          label="选择网络 *"
+                          value={selectedNetwork}
+                          onChange={(e) => setSelectedNetwork(e.target.value)}
+                          required
+                        >
+                          {getNetworkOptions().map((network) => (
+                            <MenuItem key={network.value} value={network.value}>
+                              {network.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                        活动信息将同时上链到 {getNetworkDisplayName(selectedNetwork)}
+                      </Typography>
+                    </>
+                  )}
+                </Box>
               </Box>
             </Paper>
           </Grid>
@@ -466,16 +585,6 @@ const EventCreate = () => {
                     />
                   }
                   label="允许公众投票"
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      name="on_chain"
-                      checked={formData.on_chain}
-                      onChange={handleChange}
-                    />
-                  }
-                  label="链上创建（需要连接钱包）"
                 />
               </Box>
             </Paper>

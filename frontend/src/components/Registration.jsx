@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { eventApi } from '../api/eventApi'
 import { registrationApi } from '../api/registrationApi'
+import { useWallet } from '../contexts/WalletContext'
 import BackToEventDetail from './BackToEventDetail'
 import './Registration.css'
 import Box from '@mui/material/Box'
@@ -12,18 +13,24 @@ import Paper from '@mui/material/Paper'
 import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
 import Chip from '@mui/material/Chip'
+import Checkbox from '@mui/material/Checkbox'
+import FormControlLabel from '@mui/material/FormControlLabel'
 
 const Registration = () => {
   const { eventId } = useParams()
   const navigate = useNavigate()
+  const { account: connectedAddress } = useWallet()
   const [event, setEvent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [querying, setQuerying] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
-  const [walletAddress, setWalletAddress] = useState('')
   const [registration, setRegistration] = useState(null)
+  const [useConnectedWallet, setUseConnectedWallet] = useState(true)
+  const [manualAddress, setManualAddress] = useState('')
+  
+  const walletAddress = useConnectedWallet && connectedAddress ? connectedAddress : manualAddress
 
   useEffect(() => {
     loadEvent()
@@ -42,46 +49,47 @@ const Registration = () => {
     }
   }
 
-  const validateWalletAddress = (address) => {
-    // 基本的以太坊地址验证（42字符，以0x开头）
-    return /^0x[a-fA-F0-9]{40}$/.test(address)
-  }
+  // 查询报名状态
+  useEffect(() => {
+    const checkRegistration = async () => {
+      if (!walletAddress) {
+        setRegistration(null)
+        return
+      }
 
-  const handleWalletAddressChange = async (value) => {
-    setWalletAddress(value)
-    setRegistration(null)
-    setError(null)
-    
-    // 如果地址有效，自动查询报名状态
-    if (value.trim() && validateWalletAddress(value.trim())) {
       try {
         setQuerying(true)
         const registrations = await registrationApi.getRegistrationsByEvent(eventId)
         const found = registrations.find(
-          (reg) => reg.wallet_address && reg.wallet_address.toLowerCase() === value.trim().toLowerCase()
+          (reg) => reg.wallet_address && reg.wallet_address.toLowerCase() === walletAddress.toLowerCase()
         )
         if (found) {
           setRegistration(found)
+        } else {
+          setRegistration(null)
         }
       } catch (err) {
-        // 查询失败不影响用户输入
         console.error('查询报名状态失败:', err)
+        setRegistration(null)
       } finally {
         setQuerying(false)
       }
     }
-  }
+
+    checkRegistration()
+  }, [walletAddress, eventId])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     
     // 验证钱包地址
-    if (!walletAddress.trim()) {
+    if (!walletAddress || walletAddress.trim() === '') {
       setError('请输入钱包地址')
       return
     }
 
-    if (!validateWalletAddress(walletAddress.trim())) {
+    // 验证钱包地址格式
+    if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress.trim())) {
       setError('请输入有效的钱包地址（以太坊地址格式：0x开头，42字符）')
       return
     }
@@ -102,8 +110,15 @@ const Registration = () => {
       })
       
       setSuccess(true)
-      setWalletAddress('')
       setRegistration(null)
+      // 重新查询报名状态
+      const registrations = await registrationApi.getRegistrationsByEvent(eventId)
+      const found = registrations.find(
+        (reg) => reg.wallet_address && reg.wallet_address.toLowerCase() === walletAddress.trim().toLowerCase()
+      )
+      if (found) {
+        setRegistration(found)
+      }
     } catch (err) {
       setError(err.response?.data?.error || err.message || '报名失败，请稍后重试')
     } finally {
@@ -204,7 +219,6 @@ const Registration = () => {
             </Button>
             <Button variant="outlined" onClick={() => {
               setSuccess(false)
-              setWalletAddress('')
               setRegistration(null)
             }}>
               继续报名
@@ -274,20 +288,50 @@ const Registration = () => {
             )}
 
             <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <TextField
-                label="钱包地址 *"
-                value={walletAddress}
-                onChange={(e) => handleWalletAddressChange(e.target.value)}
-                fullWidth
-                required
-                placeholder="0x..."
-                helperText="请输入您的以太坊钱包地址（用于唯一性校验）"
-                error={walletAddress && !validateWalletAddress(walletAddress.trim())}
-                disabled={querying}
-                InputProps={{
-                  endAdornment: querying ? <CircularProgress size={20} /> : null,
-                }}
-              />
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  钱包地址 *
+                </Typography>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={useConnectedWallet}
+                      onChange={(e) => {
+                        setUseConnectedWallet(e.target.checked)
+                        if (!e.target.checked) {
+                          setManualAddress('')
+                        }
+                      }}
+                      disabled={!connectedAddress}
+                    />
+                  }
+                  label={connectedAddress ? `使用连接的钱包 (${connectedAddress.slice(0, 6)}...${connectedAddress.slice(-4)})` : '使用连接的钱包（请先连接钱包）'}
+                />
+                {!useConnectedWallet && (
+                  <TextField
+                    label="手动输入钱包地址"
+                    value={manualAddress}
+                    onChange={(e) => setManualAddress(e.target.value)}
+                    placeholder="0x..."
+                    fullWidth
+                    helperText="请输入以太坊钱包地址（42字符，以0x开头）"
+                    error={manualAddress && !/^0x[a-fA-F0-9]{40}$/.test(manualAddress.trim())}
+                  />
+                )}
+                {useConnectedWallet && !connectedAddress && (
+                  <Alert severity="info">
+                    请使用右上角的"连接钱包"按钮连接您的钱包，或取消勾选使用手动输入
+                  </Alert>
+                )}
+                {walletAddress && querying && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CircularProgress size={16} />
+                    <Typography variant="body2" color="text.secondary">
+                      查询报名状态中...
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <Button
@@ -300,7 +344,7 @@ const Registration = () => {
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={submitting || !walletAddress.trim() || !!registration}
+                  disabled={submitting || !walletAddress || walletAddress.trim() === '' || !!registration}
                 >
                   {submitting ? '提交中...' : '提交报名'}
                 </Button>
