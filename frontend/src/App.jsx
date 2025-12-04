@@ -15,6 +15,7 @@ import SubmissionList from './components/SubmissionList'
 import SubmissionForm from './components/SubmissionForm'
 import VotingPanel from './components/VotingPanel'
 import Results from './components/Results'
+import WalletTest from './components/WalletTest'
 import './App.css'
 import AppBar from '@mui/material/AppBar'
 import Toolbar from '@mui/material/Toolbar'
@@ -52,6 +53,9 @@ function App() {
               <Button color="inherit" component={RouterLink} to="/sponsors">
                 赞助商管理
               </Button>
+              <Button color="inherit" component={RouterLink} to="/wallet-test">
+                钱包测试
+              </Button>
             </Box>
           </Toolbar>
         </AppBar>
@@ -73,6 +77,7 @@ function App() {
             <Route path="/events/:eventId/teams" element={<TeamManagement />} />
             <Route path="/sponsors" element={<SponsorManagement />} />
             <Route path="/teams" element={<TeamManagement />} />
+            <Route path="/wallet-test" element={<WalletTest />} />
           </Routes>
         </Container>
       </Box>
