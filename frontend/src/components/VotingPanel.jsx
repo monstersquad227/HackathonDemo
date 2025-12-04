@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { ethers } from 'ethers'
 import { eventApi } from '../api/eventApi'
 import { submissionApi } from '../api/submissionApi'
 import { voteApi } from '../api/voteApi'
+import BackToEventDetail from './BackToEventDetail'
 import './VotingPanel.css'
 
 const defaultForm = {
@@ -31,6 +32,7 @@ const VoterTypeLabels = {
 
 function VotingPanel() {
   const { eventId } = useParams()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const submissionIdParam = searchParams.get('submission')
   const [event, setEvent] = useState(null)
@@ -293,6 +295,7 @@ function VotingPanel() {
 
   return (
     <div className="voting-panel" style={{ minHeight: '400px', padding: '20px' }}>
+      <BackToEventDetail />
       <div className="panel-header" style={{ marginBottom: '20px' }}>
         <div>
           <h1 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: '600' }}>投票面板</h1>
@@ -300,9 +303,6 @@ function VotingPanel() {
             活动：{event?.name || '未知活动'} · 当前阶段：{event?.current_stage || '未知'}
           </p>
         </div>
-        <Link className="btn btn-outline" to={`/events/${eventId}`} style={{ textDecoration: 'none' }}>
-          返回活动详情
-        </Link>
       </div>
 
       <div className="grid">

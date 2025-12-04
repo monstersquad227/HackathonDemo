@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { registrationApi } from '../api/registrationApi'
 import { eventApi } from '../api/eventApi'
+import BackToEventDetail from './BackToEventDetail'
 import './RegistrationManagement.css'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -13,6 +14,7 @@ import Alert from '@mui/material/Alert'
 
 const RegistrationManagement = () => {
   const { eventId } = useParams()
+  const navigate = useNavigate()
   const [registrations, setRegistrations] = useState([])
   const [event, setEvent] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -98,6 +100,7 @@ const RegistrationManagement = () => {
 
   return (
     <Box>
+      <BackToEventDetail />
       <Typography variant="h4" component="h1" fontWeight={600} sx={{ mb: 3 }}>
         报名管理
       </Typography>

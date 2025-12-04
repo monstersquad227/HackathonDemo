@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { teamApi } from '../api/teamApi'
+import BackToEventDetail from './BackToEventDetail'
 import './TeamManagement.css'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -145,16 +146,12 @@ const TeamManagement = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" fontWeight={600}>
-          {eventId ? '活动队伍管理' : '队伍管理'}
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          {eventId && (
-            <Button variant="outlined" onClick={() => navigate(`/events/${eventId}`)}>
-              返回活动详情
-            </Button>
-          )}
+      <Box sx={{ mb: 3 }}>
+        {eventId && <BackToEventDetail />}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h4" component="h1" fontWeight={600}>
+            {eventId ? '活动队伍管理' : '队伍管理'}
+          </Typography>
           {eventId && (
             <Button variant="contained" onClick={() => setShowCreateForm(!showCreateForm)}>
               {showCreateForm ? '取消' : '创建队伍'}

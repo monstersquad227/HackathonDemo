@@ -66,18 +66,10 @@ const EventList = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ mb: 3 }}>
         <Typography variant="h4" component="h1" fontWeight={600}>
           活动列表
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          component={RouterLink}
-          to="/events/create"
-        >
-          创建新活动
-        </Button>
       </Box>
 
       {loading && <Typography>加载中...</Typography>}
@@ -91,7 +83,7 @@ const EventList = () => {
         <>
           {events.length === 0 ? (
             <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
-              <Typography>暂无活动，点击上方按钮创建第一个活动</Typography>
+              <Typography>暂无活动</Typography>
             </Box>
           ) : (
             <Grid container spacing={2}>

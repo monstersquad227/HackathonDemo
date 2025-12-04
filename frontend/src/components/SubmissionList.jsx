@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { submissionApi } from '../api/submissionApi'
+import BackToEventDetail from './BackToEventDetail'
 import './SubmissionList.css'
 
 const SubmissionList = () => {
@@ -43,6 +44,7 @@ const SubmissionList = () => {
 
   return (
     <div className="submission-list-page">
+      <BackToEventDetail />
       <h1>作品提交管理</h1>
       {error && <div className="error-message">{error}</div>}
 

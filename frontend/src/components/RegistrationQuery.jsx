@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { eventApi } from '../api/eventApi'
 import { registrationApi } from '../api/registrationApi'
+import BackToEventDetail from './BackToEventDetail'
 import './RegistrationQuery.css'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -122,12 +123,7 @@ const RegistrationQuery = () => {
 
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
-      <Button
-        onClick={() => navigate(`/events/${eventId}`)}
-        sx={{ mb: 2 }}
-      >
-        ← 返回活动详情
-      </Button>
+      <BackToEventDetail />
 
       <Typography variant="h4" component="h1" fontWeight={600} sx={{ mb: 3 }}>
         报名查询

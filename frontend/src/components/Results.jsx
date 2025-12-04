@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { eventApi } from '../api/eventApi'
 import { voteApi } from '../api/voteApi'
+import BackToEventDetail from './BackToEventDetail'
+import Button from '@mui/material/Button'
 import './Results.css'
 
 const stageLabels = {
@@ -15,6 +17,7 @@ const stageLabels = {
 
 function Results() {
   const { eventId } = useParams()
+  const navigate = useNavigate()
   const [event, setEvent] = useState(null)
   const [summary, setSummary] = useState([])
   const [loading, setLoading] = useState(true)
@@ -69,9 +72,7 @@ function Results() {
       <div className="results-page error-message">
         加载失败: {error}
         <div style={{ marginTop: '16px' }}>
-          <Link className="btn btn-secondary" to={`/events/${eventId}`}>
-            返回活动详情
-          </Link>
+          <BackToEventDetail />
         </div>
       </div>
     )
@@ -82,9 +83,12 @@ function Results() {
       <div className="results-page error-message">
         活动不存在
         <div style={{ marginTop: '16px' }}>
-          <Link className="btn btn-secondary" to="/">
-            返回活动列表
-          </Link>
+          <Button
+            onClick={() => navigate('/')}
+            sx={{ mb: 2 }}
+          >
+            ← 返回活动列表
+          </Button>
         </div>
       </div>
     )
@@ -92,6 +96,9 @@ function Results() {
 
   return (
     <div className="results-page">
+      <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+        <BackToEventDetail />
+      </div>
       <div className="results-header">
         <div>
           <h1>{event.name} · 结果与排名</h1>
@@ -99,11 +106,6 @@ function Results() {
             当前阶段：{stageLabels[event.current_stage] || event.current_stage}
             {isFinalStage ? ' · 本页面展示最终结果' : ' · 投票仍可能变动，结果仅供实时参考'}
           </p>
-        </div>
-        <div className="header-actions">
-          <Link className="btn btn-secondary" to={`/events/${eventId}`}>
-            返回活动详情
-          </Link>
         </div>
       </div>
 

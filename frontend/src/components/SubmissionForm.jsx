@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { ethers } from 'ethers'
 import { submissionApi } from '../api/submissionApi'
 import { teamApi } from '../api/teamApi'
+import BackToEventDetail from './BackToEventDetail'
 import './SubmissionForm.css'
 
 const SubmissionForm = () => {
   const { eventId } = useParams()
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     leader_address: '',
     title: '',
@@ -239,6 +241,7 @@ const SubmissionForm = () => {
 
   return (
     <div className="submission-form-page">
+      <BackToEventDetail />
       <h1>{existingSubmission ? '修改作品' : '提交作品'}</h1>
       {error && <div className="error-message">{error}</div>}
       {success && (
