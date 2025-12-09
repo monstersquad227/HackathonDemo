@@ -4,13 +4,16 @@ import { submissionApi } from '../api/submissionApi'
 import { teamApi } from '../api/teamApi'
 import { useWallet } from '../contexts/WalletContext'
 import BackToEventDetail from './BackToEventDetail'
-import './SubmissionForm.css'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
+import Button from '@mui/material/Button'
 import Alert from '@mui/material/Alert'
 import Checkbox from '@mui/material/Checkbox'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import Paper from '@mui/material/Paper'
+import Stack from '@mui/material/Stack'
+import CircularProgress from '@mui/material/CircularProgress'
 
 const SubmissionForm = () => {
   const { eventId } = useParams()
@@ -242,25 +245,39 @@ const SubmissionForm = () => {
   }
 
   if (loading) {
-    return <div className="loading">加载中...</div>
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <CircularProgress />
+      </Box>
+    )
   }
 
   return (
-    <div className="submission-form-page">
+    <Box sx={{ maxWidth: 800, mx: 'auto' }}>
       <BackToEventDetail />
-      <h1>{existingSubmission ? '修改作品' : '提交作品'}</h1>
-      {error && <div className="error-message">{error}</div>}
-      {success && (
-        <div className="success-message">
-          {existingSubmission ? '修改成功' : '提交成功'}
-        </div>
+      
+      <Typography variant="h4" component="h1" fontWeight={600} sx={{ mb: 3 }}>
+        {existingSubmission ? '修改作品' : '提交作品'}
+      </Typography>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+          {error}
+        </Alert>
       )}
 
-      <div className="card">
-        <form onSubmit={handleSubmit} className="submission-form">
-          <div className="form-group">
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Typography variant="body2" color="text.secondary">
+      {success && (
+        <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>
+          {existingSubmission ? '修改成功' : '提交成功'}
+        </Alert>
+      )}
+
+      <Paper sx={{ p: 3 }}>
+        <Box component="form" onSubmit={handleSubmit}>
+          <Stack spacing={3}>
+            {/* 队长钱包地址 */}
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                 队长钱包地址 *
               </Typography>
               <FormControlLabel
@@ -285,27 +302,31 @@ const SubmissionForm = () => {
                   onChange={(e) => setManualAddress(e.target.value)}
                   placeholder="0x..."
                   fullWidth
+                  sx={{ mt: 1 }}
                   helperText="请输入以太坊钱包地址（42字符，以0x开头）"
                   error={manualAddress && !/^0x[a-fA-F0-9]{40}$/.test(manualAddress.trim())}
                 />
               )}
               {useConnectedWallet && !connectedAddress && (
-                <Alert severity="info" sx={{ py: 0.5 }}>
+                <Alert severity="info" sx={{ mt: 1, borderRadius: 2 }}>
                   请使用右上角的"连接钱包"按钮连接您的钱包，或取消勾选使用手动输入
                 </Alert>
               )}
               {validatingTeam && (
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  正在查找队伍...
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                  <CircularProgress size={16} />
+                  <Typography variant="body2" color="text.secondary">
+                    正在查找队伍...
+                  </Typography>
+                </Box>
               )}
               {teamInfo && !validatingTeam && (
-                <Alert severity="success" sx={{ mt: 1 }}>
+                <Alert severity="success" sx={{ mt: 1, borderRadius: 2 }}>
                   找到队伍：{teamInfo.name} (ID: {teamInfo.id})
                 </Alert>
               )}
               {!teamInfo && !validatingTeam && walletAddress && validateAddress(walletAddress) && (
-                <Alert severity="error" sx={{ mt: 1 }}>
+                <Alert severity="error" sx={{ mt: 1, borderRadius: 2 }}>
                   未找到该钱包地址在此活动中的队伍
                 </Alert>
               )}
@@ -313,71 +334,89 @@ const SubmissionForm = () => {
                 请输入队长钱包地址，系统将自动查找该地址在此活动中的队伍
               </Typography>
             </Box>
-          </div>
-          <div className="form-group">
-            <label>作品标题 *</label>
-            <input
-              type="text"
+
+            {/* 作品标题 */}
+            <TextField
+              label="作品标题 *"
               name="title"
               value={formData.title}
               onChange={handleChange}
               required
+              fullWidth
             />
-          </div>
-          <div className="form-group">
-            <label>作品描述 *</label>
-            <textarea
+
+            {/* 作品描述 */}
+            <TextField
+              label="作品描述 *"
               name="description"
               value={formData.description}
               onChange={handleChange}
-              rows="4"
+              multiline
+              rows={4}
               required
+              fullWidth
             />
-          </div>
-          <div className="form-group">
-            <label>GitHub 仓库链接 *</label>
-            <input
-              type="url"
+
+            {/* GitHub 仓库链接 */}
+            <TextField
+              label="GitHub 仓库链接 *"
               name="github_repo"
               value={formData.github_repo}
               onChange={handleChange}
               placeholder="https://github.com/..."
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Demo 链接 *</label>
-            <input
               type="url"
+              required
+              fullWidth
+            />
+
+            {/* Demo 链接 */}
+            <TextField
+              label="Demo 链接 *"
               name="demo_url"
               value={formData.demo_url}
               onChange={handleChange}
               placeholder="https://..."
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>文档链接 *</label>
-            <input
               type="url"
+              required
+              fullWidth
+            />
+
+            {/* 文档链接 */}
+            <TextField
+              label="文档链接 *"
               name="documentation"
               value={formData.documentation}
               onChange={handleChange}
               placeholder="https://..."
+              type="url"
               required
+              fullWidth
             />
-          </div>
 
-          <div className="form-actions">
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? (existingSubmission ? '修改中...' : '提交中...') : (existingSubmission ? '修改作品' : '提交作品')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            {/* 提交按钮 */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, pt: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => navigate(`/events/${eventId}`)}
+                disabled={submitting}
+                sx={{ textTransform: 'none' }}
+              >
+                取消
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={submitting}
+                sx={{ textTransform: 'none' }}
+              >
+                {submitting ? (existingSubmission ? '修改中...' : '提交中...') : (existingSubmission ? '修改作品' : '提交作品')}
+              </Button>
+            </Box>
+          </Stack>
+        </Box>
+      </Paper>
+    </Box>
   )
 }
 
 export default SubmissionForm
-

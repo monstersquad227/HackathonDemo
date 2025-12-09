@@ -6,7 +6,19 @@ import { voteApi } from '../api/voteApi'
 import { checkinApi } from '../api/checkinApi'
 import { useWallet } from '../contexts/WalletContext'
 import BackToEventDetail from './BackToEventDetail'
-import './VotingPanel.css'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Paper from '@mui/material/Paper'
+import TextField from '@mui/material/TextField'
+import Button from '@mui/material/Button'
+import Alert from '@mui/material/Alert'
+import CircularProgress from '@mui/material/CircularProgress'
+import Stack from '@mui/material/Stack'
+import Grid from '@mui/material/Grid'
+import MenuItem from '@mui/material/MenuItem'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import Select from '@mui/material/Select'
 
 const defaultForm = {
   submission_id: '',
@@ -16,7 +28,6 @@ const defaultForm = {
   signature: '',
   offchain_proof: '',
 }
-
 
 function VotingPanel() {
   const { eventId } = useParams()
@@ -157,7 +168,6 @@ function VotingPanel() {
     }
   }
 
-
   const votingWindow = useMemo(() => {
     if (!event) return '-'
     const { voting_start_time, voting_end_time } = event
@@ -166,136 +176,180 @@ function VotingPanel() {
     return `${format(voting_start_time)} ～ ${format(voting_end_time)}`
   }, [event])
 
-  // 确保至少显示一些内容，即使数据加载失败
+  const selectedSubmission = submissions.find((s) => s.id === Number(form.submission_id))
+
   if (loading) {
     return (
-      <div className="voting-panel" style={{ minHeight: '400px', padding: '20px' }}>
-        <div className="loading" style={{ padding: '40px', textAlign: 'center', fontSize: '16px' }}>
-          加载投票数据中...
-        </div>
-      </div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <CircularProgress />
+      </Box>
     )
   }
 
   if (error) {
     return (
-      <div className="voting-panel" style={{ minHeight: '400px', padding: '20px' }}>
-        <div className="error-message" style={{ padding: '40px', textAlign: 'center' }}>
-          <h2>加载失败</h2>
-          <p style={{ color: '#dc3545', margin: '20px 0' }}>{error}</p>
-          <button onClick={() => loadData()} className="btn btn-primary" style={{ marginTop: '20px' }}>
-            重试
-          </button>
-        </div>
-      </div>
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            加载失败
+          </Typography>
+          <Typography>{error}</Typography>
+        </Alert>
+        <Button variant="contained" onClick={() => loadData()} sx={{ textTransform: 'none' }}>
+          重试
+        </Button>
+      </Box>
     )
   }
 
   if (!event) {
     return (
-      <div className="voting-panel" style={{ minHeight: '400px', padding: '20px' }}>
-        <div className="error-message" style={{ padding: '40px', textAlign: 'center' }}>
-          <h2>活动不存在</h2>
-          <p style={{ margin: '20px 0' }}>无法找到ID为 {eventId} 的活动</p>
-          <Link to="/" className="btn btn-primary" style={{ marginTop: '20px', display: 'inline-block' }}>
-            返回活动列表
-          </Link>
-        </div>
-      </div>
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            活动不存在
+          </Typography>
+          <Typography>无法找到ID为 {eventId} 的活动</Typography>
+        </Alert>
+        <Button 
+          variant="contained" 
+          component={Link} 
+          to="/" 
+          sx={{ textTransform: 'none' }}
+        >
+          返回活动列表
+        </Button>
+      </Box>
     )
   }
 
   return (
-    <div className="voting-panel" style={{ minHeight: '400px', padding: '20px' }}>
+    <Box>
       <BackToEventDetail />
-      <div className="panel-header" style={{ marginBottom: '20px' }}>
-        <div>
-          <h1 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: '600' }}>投票面板</h1>
-          <p className="subtitle" style={{ margin: 0 }}>
-            活动：{event?.name || '未知活动'} · 当前阶段：{event?.current_stage || '未知'}
-          </p>
-        </div>
-      </div>
+      
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" fontWeight={600} sx={{ mb: 1 }}>
+          投票面板
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          活动：{event?.name || '未知活动'} · 当前阶段：{event?.current_stage || '未知'}
+        </Typography>
+      </Box>
 
-      <div className="card">
-        <h2>投票窗口</h2>
-        <p>{votingWindow}</p>
-        <ul className="inline-list">
-          <li>允许赞助商投票：{event?.allow_sponsor_voting ? '是' : '否'}</li>
-          <li>允许公众投票：{event?.allow_public_voting ? '是' : '否'}</li>
-        </ul>
-        <p className="hint">公众默认每作品 1 票、每场最多 3 票，评委/赞助商凭权重自动计分。</p>
-      </div>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+              投票窗口
+            </Typography>
+            <Stack spacing={2}>
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                  投票时间
+                </Typography>
+                <Typography variant="body1">
+                  {votingWindow}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                  投票设置
+                </Typography>
+                <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+                  <Typography variant="body2">
+                    允许赞助商投票：{event?.allow_sponsor_voting ? '是' : '否'}
+                  </Typography>
+                  <Typography variant="body2">
+                    允许公众投票：{event?.allow_public_voting ? '是' : '否'}
+                  </Typography>
+                </Stack>
+              </Box>
+              <Alert severity="info" sx={{ borderRadius: 2 }}>
+                公众默认每作品 1 票、每场最多 3 票，评委/赞助商凭权重自动计分。
+              </Alert>
+            </Stack>
+          </Paper>
+        </Grid>
 
-      <div className="card">
-        <h2>提交投票</h2>
-        <form onSubmit={handleVoteSubmit} className="form-vertical">
-          <label>
-            作品
-            <input
-              type="text"
-              value={
-                form.submission_id && Array.isArray(submissions) && submissions.length > 0
-                  ? (() => {
-                      const submission = submissions.find((s) => s.id === Number(form.submission_id))
-                      return submission ? `${submission.title} (#${submission.id})` : ''
-                    })()
-                  : '暂无作品'
-              }
-              readOnly
-              style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
-            />
-          </label>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+              提交投票
+            </Typography>
+            <Box component="form" onSubmit={handleVoteSubmit}>
+              <Stack spacing={3}>
+                <FormControl fullWidth>
+                  <InputLabel>作品</InputLabel>
+                  <Select
+                    name="submission_id"
+                    value={form.submission_id}
+                    onChange={handleFormChange}
+                    label="作品"
+                    required
+                  >
+                    {submissions.map((submission) => (
+                      <MenuItem key={submission.id} value={submission.id}>
+                        {submission.title} (#{submission.id})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-          <label>
-            投票地址 *
-            <input
-              name="voter_address"
-              placeholder="0x..."
-              value={form.voter_address}
-              onChange={handleFormChange}
-              required
-            />
-            <p className="hint" style={{ marginTop: '5px', fontSize: '0.9em', color: '#666' }}>
-              每个钱包地址只能投一票。连接钱包后地址将自动填入，也可手动编辑。
-            </p>
-          </label>
+                <TextField
+                  name="voter_address"
+                  label="投票地址 *"
+                  placeholder="0x..."
+                  value={form.voter_address}
+                  onChange={handleFormChange}
+                  required
+                  fullWidth
+                  helperText="每个钱包地址只能投一票。连接钱包后地址将自动填入，也可手动编辑。"
+                />
 
-          <label>
-            投票理由（可选）
-            <textarea name="reason" value={form.reason} onChange={handleFormChange} rows={2} />
-          </label>
+                <TextField
+                  name="reason"
+                  label="投票理由（可选）"
+                  value={form.reason}
+                  onChange={handleFormChange}
+                  multiline
+                  rows={3}
+                  fullWidth
+                />
 
-          <label>
-            签名（可选）
-            <input
-              name="signature"
-              placeholder="0x..."
-              value={form.signature}
-              onChange={handleFormChange}
-            />
-          </label>
+                <TextField
+                  name="signature"
+                  label="签名（可选）"
+                  placeholder="0x..."
+                  value={form.signature}
+                  onChange={handleFormChange}
+                  fullWidth
+                />
 
-          <label>
-            线下证明 / NFT 证据（可选）
-            <input
-              name="offchain_proof"
-              placeholder="token 或截图链接"
-              value={form.offchain_proof}
-              onChange={handleFormChange}
-            />
-          </label>
+                <TextField
+                  name="offchain_proof"
+                  label="线下证明 / NFT 证据（可选）"
+                  placeholder="token 或截图链接"
+                  value={form.offchain_proof}
+                  onChange={handleFormChange}
+                  fullWidth
+                />
 
-          <button type="submit" className="btn btn-primary" disabled={processingVote}>
-            {processingVote ? '提交中...' : '提交投票'}
-          </button>
-        </form>
-      </div>
-    </div>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={processingVote}
+                  fullWidth
+                  sx={{ textTransform: 'none', py: 1.5 }}
+                >
+                  {processingVote ? '提交中...' : '提交投票'}
+                </Button>
+              </Stack>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
   )
 }
 
 export default VotingPanel
-
-
-

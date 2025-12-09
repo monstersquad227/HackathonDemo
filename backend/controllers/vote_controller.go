@@ -204,3 +204,5 @@ func (c *VoteController) RemoveJudge(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "judge removed"})
 }
 
+
+

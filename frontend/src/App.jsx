@@ -17,7 +17,6 @@ import VotingPanel from './components/VotingPanel'
 import Results from './components/Results'
 import WalletConnect from './components/WalletConnect'
 import { WalletProvider } from './contexts/WalletContext'
-import './App.css'
 import AppBar from '@mui/material/AppBar'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
@@ -29,9 +28,17 @@ function App() {
   return (
     <WalletProvider>
       <Router>
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-          <AppBar position="static" color="primary" elevation={2}>
-            <Toolbar>
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
+          <AppBar 
+            position="static" 
+            color="primary" 
+            elevation={0}
+            sx={{
+              bgcolor: 'primary.main',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            }}
+          >
+            <Toolbar sx={{ px: { xs: 2, sm: 3 } }}>
               <Typography
                 variant="h6"
                 component={RouterLink}
@@ -41,27 +48,71 @@ function App() {
                   textDecoration: 'none',
                   color: 'inherit',
                   fontWeight: 600,
+                  fontSize: '1.25rem',
+                  '&:hover': {
+                    opacity: 0.9,
+                  },
                 }}
               >
                 Hackathon Platform
               </Typography>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Button color="inherit" component={RouterLink} to="/">
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Button 
+                  color="inherit" 
+                  component={RouterLink} 
+                  to="/"
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                  }}
+                >
                   活动列表
                 </Button>
-                <Button color="inherit" component={RouterLink} to="/events/create">
+                <Button 
+                  color="inherit" 
+                  component={RouterLink} 
+                  to="/events/create"
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                  }}
+                >
                   创建活动
                 </Button>
-                <Button color="inherit" component={RouterLink} to="/sponsors">
+                <Button 
+                  color="inherit" 
+                  component={RouterLink} 
+                  to="/sponsors"
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                  }}
+                >
                   赞助商管理
                 </Button>
-                <Box sx={{ ml: 2 }}>
+                <Box sx={{ ml: { xs: 0, sm: 2 }, mt: { xs: 1, sm: 0 } }}>
                   <WalletConnect />
                 </Box>
               </Box>
             </Toolbar>
           </AppBar>
-          <Container maxWidth="lg" sx={{ py: 3, flex: 1 }}>
+          <Container 
+            maxWidth="lg" 
+            sx={{ 
+              py: { xs: 3, sm: 4 }, 
+              flex: 1,
+              px: { xs: 2, sm: 3 },
+            }}
+          >
             <Routes>
               <Route path="/" element={<EventList />} />
               <Route path="/events/create" element={<EventCreate />} />
