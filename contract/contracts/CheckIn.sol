@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title CheckIn
  * @dev Smart contract for recording check-ins on-chain
  */
-contract CheckIn {
+contract CheckIn is Ownable {
+    constructor() Ownable(msg.sender) {}
+    
     // Check-in structure
     struct CheckInRecord {
         uint256 eventId;
@@ -31,11 +35,11 @@ contract CheckIn {
     );
     
     /**
-     * @dev Record a check-in (only callable by authorized contract or owner)
+     * @dev Record a check-in (only callable by owner)
      * @param eventId Event ID
      * @param user User address
      */
-    function recordCheckIn(uint256 eventId, address user) public {
+    function recordCheckIn(uint256 eventId, address user) public onlyOwner {
         require(user != address(0), "Invalid user address");
         require(!checkIns[eventId][user].exists, "Already checked in");
         
@@ -53,11 +57,12 @@ contract CheckIn {
     }
     
     /**
-     * @dev Batch record check-ins
+     * @dev Batch record check-ins (only callable by owner)
      * @param eventId Event ID
      * @param users Array of user addresses
      */
-    function batchRecordCheckIn(uint256 eventId, address[] memory users) public {
+    function batchRecordCheckIn(uint256 eventId, address[] memory users) public onlyOwner {
+        require(users.length <= 100, "Batch too large");
         for (uint256 i = 0; i < users.length; i++) {
             if (!checkIns[eventId][users[i]].exists) {
                 recordCheckIn(eventId, users[i]);

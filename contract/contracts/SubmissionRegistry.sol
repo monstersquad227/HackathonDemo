@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title SubmissionRegistry
  * @dev Stores hashes/fingerprints of project submissions on-chain
  */
-contract SubmissionRegistry {
+contract SubmissionRegistry is Ownable {
+    constructor() Ownable(msg.sender) {}
+    
     struct Submission {
         uint256 eventId;
         uint256 teamId;
@@ -27,7 +31,7 @@ contract SubmissionRegistry {
     );
 
     /**
-     * @dev Register a submission fingerprint
+     * @dev Register a submission fingerprint (only callable by owner)
      * @param eventId Event identifier
      * @param teamId Team identifier
      * @param hash Submission fingerprint (sha256/IPFS hash)
@@ -38,7 +42,7 @@ contract SubmissionRegistry {
         uint256 teamId,
         bytes32 hash,
         string memory metadataURI
-    ) public returns (uint256) {
+    ) public onlyOwner returns (uint256) {
         require(hash != bytes32(0), "Invalid hash");
         submissionCounter++;
 

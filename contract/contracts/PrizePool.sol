@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -38,7 +38,6 @@ contract PrizePool is ReentrancyGuard, Ownable {
     uint256 public eventId;
     address public eventContract; // Address of EventManagement contract
     uint256 public lockedUntil;   // Locked until this timestamp
-    bool public distributed;      // Whether prizes have been distributed
 
     // Mapping from deposit ID to deposit
     mapping(uint256 => Deposit) public deposits;
@@ -50,6 +49,9 @@ contract PrizePool is ReentrancyGuard, Ownable {
     // Total amounts by asset type
     mapping(AssetType => uint256) public totalAmounts;
     mapping(AssetType => mapping(address => uint256)) public tokenAmounts; // For ERC20/ERC721
+    
+    // Track distribution status per asset type and token address
+    mapping(AssetType => mapping(address => bool)) public assetDistributed;
 
     // Events
     event Deposited(
@@ -92,7 +94,7 @@ contract PrizePool is ReentrancyGuard, Ownable {
      * @param _eventId Event ID
      * @param _eventContract Address of EventManagement contract
      */
-    constructor(uint256 _eventId, address _eventContract) {
+    constructor(uint256 _eventId, address _eventContract) Ownable(msg.sender) {
         eventId = _eventId;
         eventContract = _eventContract;
     }
@@ -210,7 +212,7 @@ contract PrizePool is ReentrancyGuard, Ownable {
         AssetType assetType,
         address tokenAddress
     ) public onlyOwner onlyWhenLocked nonReentrant {
-        require(!distributed, "Prizes already distributed");
+        require(!assetDistributed[assetType][tokenAddress], "This asset already distributed");
         require(winners.length > 0, "No winners provided");
 
         uint256 totalToDistribute = 0;
@@ -249,17 +251,31 @@ contract PrizePool is ReentrancyGuard, Ownable {
                 IERC20 token = IERC20(tokenAddress);
                 require(token.transfer(winner, amount), "Token transfer failed");
             } else if (assetType == AssetType.ERC721) {
-                // For NFTs, distribute one NFT per rank (simplified)
-                // In practice, you might want a more complex distribution logic
+                // Find an available NFT from deposits and transfer it
                 IERC721 nft = IERC721(tokenAddress);
-                // Find an available NFT and transfer it
-                // This is simplified - you'd need to track which NFTs are available
+                bool nftFound = false;
+                
+                for (uint256 j = 1; j <= depositCounter && !nftFound; j++) {
+                    if (deposits[j].assetType == AssetType.ERC721 && 
+                        deposits[j].tokenAddress == tokenAddress &&
+                        !deposits[j].distributed) {
+                        
+                        nft.transferFrom(address(this), winner, deposits[j].tokenId);
+                        deposits[j].distributed = true;
+                        emit PrizeDistributed(rank, winner, assetType, tokenAddress, 1, deposits[j].tokenId);
+                        nftFound = true;
+                    }
+                }
+                
+                if (!nftFound) {
+                    continue; // Skip if no NFT available for this rank
+                }
+            } else {
+                emit PrizeDistributed(rank, winner, assetType, tokenAddress, amount, 0);
             }
-
-            emit PrizeDistributed(rank, winner, assetType, tokenAddress, amount, 0);
         }
 
-        distributed = true;
+        assetDistributed[assetType][tokenAddress] = true;
         emit DistributionCompleted();
     }
 
@@ -293,6 +309,13 @@ contract PrizePool is ReentrancyGuard, Ownable {
      */
     function getPrizeDistributionCount() public view returns (uint256) {
         return prizeDistributions.length;
+    }
+    
+    /**
+     * @dev Check if a specific asset type has been distributed
+     */
+    function isAssetDistributed(AssetType assetType, address tokenAddress) public view returns (bool) {
+        return assetDistributed[assetType][tokenAddress];
     }
 
     /**

@@ -89,17 +89,57 @@ export const EVENT_MANAGEMENT_ABI = [
   'event EventCreated(uint256 indexed eventId, string name, address indexed organizer, uint256 startTime, uint256 endTime)',
 ]
 
-// 默认合约地址（需要根据实际部署情况配置）
-// 这些地址应该从环境变量或配置文件中读取
-// 注意：在实际部署时，需要将合约地址配置到环境变量中
-const CONTRACT_ADDRESSES = {
-  sepolia: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_SEPOLIA || '',
-  goerli: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_GOERLI || '',
-  mumbai: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_MUMBAI || '',
-  polygon: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_POLYGON || '',
-  ethereum: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_ETHEREUM || '',
-  bsc: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_BSC || '',
-  bscTestnet: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_BSC_TESTNET || '',
+// 合约地址配置（从环境变量读取）
+// Sepolia 测试网合约地址
+export const CONTRACT_ADDRESSES = {
+  sepolia: {
+    eventManagement: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_SEPOLIA || '0xCA58572abaA32748384641440DEAbDABc1b1831D',
+    registrationSBT: import.meta.env.VITE_REGISTRATION_SBT_CONTRACT_SEPOLIA || '0x44dEB2A6d138B148b27388122EDF96fEFc241267',
+    checkIn: import.meta.env.VITE_CHECKIN_CONTRACT_SEPOLIA || '0x2f43D00157E70CaE0b1aBcEC66e42B57E53C642B',
+    submissionRegistry: import.meta.env.VITE_SUBMISSION_REGISTRY_CONTRACT_SEPOLIA || '0x37FAc80dc206b97098Ae464D00B2056D5418eb93',
+  },
+  // 其他网络的配置（预留）
+  goerli: {
+    eventManagement: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_GOERLI || '',
+    registrationSBT: import.meta.env.VITE_REGISTRATION_SBT_CONTRACT_GOERLI || '',
+    checkIn: import.meta.env.VITE_CHECKIN_CONTRACT_GOERLI || '',
+    submissionRegistry: import.meta.env.VITE_SUBMISSION_REGISTRY_CONTRACT_GOERLI || '',
+  },
+  mumbai: {
+    eventManagement: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_MUMBAI || '',
+    registrationSBT: import.meta.env.VITE_REGISTRATION_SBT_CONTRACT_MUMBAI || '',
+    checkIn: import.meta.env.VITE_CHECKIN_CONTRACT_MUMBAI || '',
+    submissionRegistry: import.meta.env.VITE_SUBMISSION_REGISTRY_CONTRACT_MUMBAI || '',
+  },
+  polygon: {
+    eventManagement: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_POLYGON || '',
+    registrationSBT: import.meta.env.VITE_REGISTRATION_SBT_CONTRACT_POLYGON || '',
+    checkIn: import.meta.env.VITE_CHECKIN_CONTRACT_POLYGON || '',
+    submissionRegistry: import.meta.env.VITE_SUBMISSION_REGISTRY_CONTRACT_POLYGON || '',
+  },
+  ethereum: {
+    eventManagement: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_ETHEREUM || '',
+    registrationSBT: import.meta.env.VITE_REGISTRATION_SBT_CONTRACT_ETHEREUM || '',
+    checkIn: import.meta.env.VITE_CHECKIN_CONTRACT_ETHEREUM || '',
+    submissionRegistry: import.meta.env.VITE_SUBMISSION_REGISTRY_CONTRACT_ETHEREUM || '',
+  },
+  bsc: {
+    eventManagement: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_BSC || '',
+    registrationSBT: import.meta.env.VITE_REGISTRATION_SBT_CONTRACT_BSC || '',
+    checkIn: import.meta.env.VITE_CHECKIN_CONTRACT_BSC || '',
+    submissionRegistry: import.meta.env.VITE_SUBMISSION_REGISTRY_CONTRACT_BSC || '',
+  },
+  bscTestnet: {
+    eventManagement: import.meta.env.VITE_EVENT_MANAGEMENT_CONTRACT_BSC_TESTNET || '',
+    registrationSBT: import.meta.env.VITE_REGISTRATION_SBT_CONTRACT_BSC_TESTNET || '',
+    checkIn: import.meta.env.VITE_CHECKIN_CONTRACT_BSC_TESTNET || '',
+    submissionRegistry: import.meta.env.VITE_SUBMISSION_REGISTRY_CONTRACT_BSC_TESTNET || '',
+  },
+}
+
+// 向后兼容：获取 EventManagement 合约地址
+const getEventManagementAddress = (networkKey) => {
+  return CONTRACT_ADDRESSES[networkKey]?.eventManagement || ''
 }
 
 /**
@@ -205,7 +245,7 @@ export const createEventOnChain = async (eventData, networkKey, contractAddress 
   }
 
   // 获取合约地址
-  const address = contractAddress || CONTRACT_ADDRESSES[networkKey]
+  const address = contractAddress || getEventManagementAddress(networkKey)
   if (!address) {
     throw new Error(`网络 ${networkKey} 的合约地址未配置，请联系管理员`)
   }

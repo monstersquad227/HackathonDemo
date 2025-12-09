@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -42,7 +43,7 @@ contract RegistrationSBT is ERC721Enumerable, Ownable, ReentrancyGuard {
         string teamName
     );
     
-    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
+    constructor(string memory name, string memory symbol) ERC721(name, symbol) Ownable(msg.sender) {}
     
     /**
      * @dev Mint a registration SBT (only owner/organizer can call)
@@ -101,54 +102,15 @@ contract RegistrationSBT is ERC721Enumerable, Ownable, ReentrancyGuard {
     }
     
     /**
-     * @dev Override transfer functions to make token non-transferable
+     * @dev Override _update to make token non-transferable
      */
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId,
-        uint256 batchSize
-    ) internal virtual override(ERC721Enumerable) {
+    function _update(address to, uint256 tokenId, address auth) internal virtual override(ERC721Enumerable) returns (address) {
+        address from = _ownerOf(tokenId);
         // Allow minting (from == address(0))
         if (from != address(0)) {
             revert("SBT: Token is non-transferable");
         }
-        
-        super._beforeTokenTransfer(from, to, tokenId, batchSize);
-    }
-    
-    /**
-     * @dev Override transferFrom to prevent transfers
-     */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public override(ERC721) {
-        revert("SBT: Token is non-transferable");
-    }
-    
-    /**
-     * @dev Override safeTransferFrom to prevent transfers
-     */
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public override(ERC721) {
-        revert("SBT: Token is non-transferable");
-    }
-    
-    /**
-     * @dev Override safeTransferFrom with data to prevent transfers
-     */
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes memory data
-    ) public override(ERC721) {
-        revert("SBT: Token is non-transferable");
+        return super._update(to, tokenId, auth);
     }
     
     /**
@@ -164,7 +126,7 @@ contract RegistrationSBT is ERC721Enumerable, Ownable, ReentrancyGuard {
      * @param tokenId Token ID
      */
     function getRegistrationData(uint256 tokenId) public view returns (RegistrationData memory) {
-        require(_exists(tokenId), "Token does not exist");
+        require(ownerOf(tokenId) != address(0), "Token does not exist");
         return tokenData[tokenId];
     }
     
